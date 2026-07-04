@@ -462,15 +462,19 @@ process (Architecture → DB → Wireframes → Design System → Folder Structu
 Backend → Auth → Admin → Dashboard → Syllabus → Notes → PYQ → Current Affairs →
 Testing → Deployment). See `PROJECT_CHECKLIST.md` for live status.
 
-## 15. Open Questions (to resolve before/within Phase 2)
+## 15. Resolved Decisions (locked 2026-07-04)
 
-1. **OTP channel at launch:** email-only, or SMS provider too? (affects Auth design)
-2. **Search engine:** commit to Meilisearch for v1, or ship Postgres FTS first?
-3. **Media hosting:** AWS S3 vs Cloudinary as primary; who owns which asset types?
-4. **Multi-tenancy for exams:** single DB with `examId` scoping (recommended) vs
-   separate schemas — confirm before Phase 3.
-5. **Answer-writing AI eval:** in-scope for first Answer-Writing release or defer?
-6. **Localization:** is Telugu a near-term requirement affecting the content model?
+These were open questions at Phase 1 authoring; now decided and binding on all
+downstream phases.
+
+| # | Decision | Resolution | Downstream impact |
+|---|----------|-----------|-------------------|
+| 1 | OTP channel at launch | **Email-only** (phone-ready but not wired) | Auth: no SMS provider in v1; `phone` optional on user |
+| 2 | Search engine | **Postgres full-text search first**; Meilisearch is a Tier-1+ upgrade | No external search service at launch; design a `SearchService` interface so the engine is swappable |
+| 3 | Media hosting | **AWS S3 (or S3-compatible) as primary** for all assets | Single storage abstraction; Cloudinary deferred |
+| 4 | Multi-exam strategy | **Single DB with `examId` scoping** | Every scoped entity carries `examId`; row-level scoping in queries & RBAC |
+| 5 | Answer-writing AI eval | **Deferred** — faculty evaluation only in first AW release | `FR-AW-04` moved out of first AW milestone |
+| 6 | Localization (Telugu) | **Not near-term** | English-only launch; schema stays i18n-friendly but no translation tables in v1 |
 
 ---
 

@@ -14,8 +14,8 @@ begins.
 
 | Phase | Deliverable | Status | Artifact |
 |------|-------------|--------|----------|
-| 1 | Product Requirement Document (PRD) | ✅ Done — **awaiting approval** | `docs/01-PRD.md` |
-| 2 | System Architecture | ⬜ Not started | `docs/02-architecture.md` |
+| 1 | Product Requirement Document (PRD) | ✅ Done — approved | `docs/01-PRD.md` |
+| 2 | System Architecture | ✅ Done — **awaiting approval** | `docs/02-architecture.md` |
 | 3 | Database Design (schema + ERD) | ⬜ Not started | `docs/03-database.md` |
 | 4 | UI/UX Wireframes | ⬜ Not started | `docs/04-wireframes.md` |
 | 5 | Design System | ⬜ Not started | `docs/05-design-system.md` |
@@ -48,21 +48,40 @@ begins.
   - Fixed tech stack and 6 open questions to resolve before Phase 3.
 - Established requirement-ID traceability (`FR-*`, `NFR-*`, `G-*`) for downstream phases.
 
-### Decisions that need your input (from PRD §15)
-1. OTP channel at launch — email-only vs SMS too?
-2. Search — Meilisearch for v1 vs Postgres FTS first?
-3. Primary media host — S3 vs Cloudinary ownership split?
-4. Multi-exam strategy — single DB with `examId` scoping (recommended)?
-5. Answer-writing AI eval — in first release or deferred?
-6. Localization — is Telugu near-term?
+### Decisions locked (2026-07-04) — see PRD §15
+1. OTP channel — **Email-only** at launch.
+2. Search — **Postgres FTS first**, Meilisearch later (behind a port).
+3. Media host — **AWS S3** primary.
+4. Multi-exam — **Single DB with `examId` scoping**.
+5. Answer-writing AI eval — **Deferred** (faculty eval first).
+6. Localization — **Telugu not near-term** (English-only launch).
 
-> These do not block Phase 1 sign-off, but answers (especially #4) shape Phase 2/3.
+---
+
+## Phase 2 — Summary of Work Done
+
+- Authored the System Architecture (`docs/02-architecture.md`):
+  - 8 architecture principles + high-level system diagram (Mermaid).
+  - Strict 5-layer model (Presentation → API → Service → Repository → Ports).
+  - **Modular monolith** with bounded contexts (Identity, Taxonomy, Content,
+    Workflow, Learning, Support) and their dependency rules.
+  - API strategy: versioned `/api/v1` REST, Zod validation, envelope + cursor
+    pagination, OpenAPI.
+  - Auth (Auth.js: email/Google/email-OTP) + data-driven RBAC enforced in a
+    single service-layer `authorize()` guard with `examId` scoping.
+  - Data/search/cache/storage: Postgres + Prisma, Postgres FTS behind `SearchPort`,
+    Redis cache-aside, S3 with pre-signed uploads — all swappable via ports.
+  - Shared content **lifecycle + versioning** state machine and background
+    jobs/domain-events model.
+  - Cross-cutting: security, observability, performance, SEO, accessibility.
+  - Deployment topology (Vercel + managed PG/Redis + S3, Docker parity, GH Actions).
+  - Roadmap-enablement matrix and **8 ADRs** with rejected alternatives.
+- Folded all 6 locked decisions into the design.
 
 ---
 
 ## Next Up
 
-**Phase 2 — System Architecture** (starts on your approval): high-level system
-diagram, service/layer boundaries, API strategy, auth/RBAC enforcement design,
-caching/search topology, storage, deployment topology, and how the architecture
-keeps the roadmap (mobile/offline/AI/payments) open.
+**Phase 3 — Database Design** (starts on your approval): normalized PostgreSQL
+schema for the syllabus graph, polymorphic content model, workflow/versioning,
+RBAC, progress & tests — with indexes, constraints, and an ER diagram.
