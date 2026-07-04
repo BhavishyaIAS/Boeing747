@@ -19,8 +19,8 @@ begins.
 | 3 | Database Design (schema + ERD) | ✅ Done — approved | `docs/03-database.md` |
 | 4 | UI/UX Wireframes | ✅ Done — approved | `docs/04-wireframes.md` |
 | 5 | Design System | ✅ Done — approved | `docs/05-design-system.md` |
-| 6 | Folder Structure | ✅ Done — **awaiting approval** | `docs/06-folder-structure.md` |
-| 7 | Backend APIs | ⬜ Not started | code + `docs/07-api.md` |
+| 6 | Folder Structure | ✅ Done — approved | `docs/06-folder-structure.md` |
+| 7 | Backend APIs | ✅ Done — **awaiting approval** | code + `docs/07-api.md` |
 | 8 | Authentication | ⬜ Not started | code |
 | 9 | Admin Panel | ⬜ Not started | code |
 | 10 | Student Dashboard | ⬜ Not started | code |
@@ -157,12 +157,35 @@ begins.
 
 ---
 
+## Phase 7 — Summary of Work Done
+
+**Scope:** foundation + 2 vertical slices; schema + migrations, mocked repos in tests.
+
+- **Project scaffold:** `package.json` (Next 15 / React 19 / Prisma 6 / Zod / Vitest),
+  `tsconfig` with path aliases, `next.config`, `vitest.config`, `.env.example`.
+- **Prisma schema realized** (`prisma/schema.prisma`): 45 models + 21 enums,
+  `prisma validate` ✓; generated initial migration (`migrations/0000_init`,
+  1016 lines) via `migrate diff` (no DB needed); raw-SQL `sql/001_search.sql`
+  (tsvector + GIN) and `sql/002_leaderboard.sql` (matview); `seed.ts` (RBAC,
+  exam, super admin, sample syllabus).
+- **Infrastructure (`lib`/`server`):** Prisma singleton, Zod env loader, text
+  utils, typed error taxonomy, response envelope + Zod parse helpers, the single
+  `authorize()` RBAC guard, audit sink, and the exam-scope/actor resolver
+  (dev-actor shim until Phase 8).
+- **Slice 1 — Syllabus (read):** `taxonomy` module (dto/repository/service) +
+  `GET /api/v1/syllabus` and `/syllabus/:slug` (tree, breadcrumb via closure).
+- **Slice 2 — Content (CRUD + workflow):** `content` module + `workflow` state
+  machine; `GET/POST /api/v1/content`, `GET /content/:id`,
+  `POST /content/:id/transition` — with versioning, separation of duties, and audit.
+- **Verified:** `prisma validate` ✓ · `tsc --noEmit` ✓ · **27 unit tests pass**
+  (state machine, authorization, taxonomy + content services with mocked repos).
+- **API reference:** `docs/07-api.md`.
+
+---
+
 ## Next Up
 
-**Phase 7 — Backend APIs** (starts on your approval): scaffold the Next.js
-project against this structure, wire Prisma + the `lib`/`server` infrastructure
-(db, redis, ports/adapters, authorize guard, error taxonomy, API helpers), and
-implement the first vertical API slices under `api/v1` with OpenAPI docs.
-
-> Note: Phase 7 is the first **code** phase — it will introduce `package.json`,
-> the Prisma schema, and real source files (no placeholder code).
+**Phase 8 — Authentication** (starts on your approval): wire Auth.js
+(email/password + Google + email OTP + verification/reset), replace the dev-actor
+shim with real sessions, and map sessions to the `Actor` consumed by
+`authorize()`.
