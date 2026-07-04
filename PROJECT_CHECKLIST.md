@@ -16,8 +16,8 @@ begins.
 |------|-------------|--------|----------|
 | 1 | Product Requirement Document (PRD) | ✅ Done — approved | `docs/01-PRD.md` |
 | 2 | System Architecture | ✅ Done — approved | `docs/02-architecture.md` |
-| 3 | Database Design (schema + ERD) | ✅ Done — **awaiting approval** | `docs/03-database.md` |
-| 4 | UI/UX Wireframes | ⬜ Not started | `docs/04-wireframes.md` |
+| 3 | Database Design (schema + ERD) | ✅ Done — approved | `docs/03-database.md` |
+| 4 | UI/UX Wireframes | ✅ Done — **awaiting approval** | `docs/04-wireframes.md` |
 | 5 | Design System | ⬜ Not started | `docs/05-design-system.md` |
 | 6 | Folder Structure | ⬜ Not started | `docs/06-folder-structure.md` |
 | 7 | Backend APIs | ⬜ Not started | code + `docs/07-api.md` |
@@ -102,8 +102,27 @@ begins.
 
 ---
 
+## Phase 4 — Summary of Work Done
+
+- Authored the UI/UX Wireframes (`docs/04-wireframes.md`):
+  - Full **information architecture / sitemap** (public, student app, admin CMS)
+    with route map and role-gating.
+  - Two **app shells** (student + admin) and explicit **responsive rules** per
+    breakpoint (desktop → bottom-tab mobile).
+  - **17 screen wireframes** (W-01…W-17) as annotated ASCII layouts: landing,
+    auth, dashboard, syllabus browser, node hub, reading view, PYQ browser,
+    question+model-answer, search, current affairs, test attempt, results, and
+    the admin content list / editor / review / users screens.
+  - **4 primary user flows** (onboarding, daily study loop, practice loop,
+    content lifecycle) + cross-cutting state & accessibility rules.
+- Built a companion **interactive visual mockup** (greybox, theme-aware) covering
+  7 key screens with numbered annotation pins mapping each UI region to its
+  backing tables.
+
+---
+
 ## Next Up
 
-**Phase 4 — UI/UX Wireframes** (starts on your approval): student reading
-experience, syllabus navigation, personal dashboard, admin CMS, and the
-editor + review workflow screens.
+**Phase 5 — Design System** (starts on your approval): the white-theme visual
+language — color tokens, typography scale, spacing, elevation, and the
+shadcn/ui-based component library that turns these wireframes into real UI.
