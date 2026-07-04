@@ -17,8 +17,8 @@ begins.
 | 1 | Product Requirement Document (PRD) | ✅ Done — approved | `docs/01-PRD.md` |
 | 2 | System Architecture | ✅ Done — approved | `docs/02-architecture.md` |
 | 3 | Database Design (schema + ERD) | ✅ Done — approved | `docs/03-database.md` |
-| 4 | UI/UX Wireframes | ✅ Done — **awaiting approval** | `docs/04-wireframes.md` |
-| 5 | Design System | ⬜ Not started | `docs/05-design-system.md` |
+| 4 | UI/UX Wireframes | ✅ Done — approved | `docs/04-wireframes.md` |
+| 5 | Design System | ✅ Done — **awaiting approval** | `docs/05-design-system.md` |
 | 6 | Folder Structure | ⬜ Not started | `docs/06-folder-structure.md` |
 | 7 | Backend APIs | ⬜ Not started | code + `docs/07-api.md` |
 | 8 | Authentication | ⬜ Not started | code |
@@ -121,8 +121,29 @@ begins.
 
 ---
 
+## Phase 5 — Summary of Work Done
+
+- Authored the Design System (`docs/05-design-system.md`):
+  - **Two-layer color model** (primitive ramps → semantic tokens): slate-tinted
+    neutrals, a 10-step **brand indigo** (`#3B4CCA`), a **saffron** secondary
+    accent, semantic status, and a separate domain palette — with AA contrast
+    checks and full light + dark token tables.
+  - **Typography**: Source Serif 4 (reading/display) + Geist Sans (UI) + Geist
+    Mono, a 12-step type scale, and reading-measure rules.
+  - **Spacing** (4px grid), **radius**, **layout metrics**, **elevation** ramp,
+    **motion** tokens, and iconography.
+  - **Component library** mapped to shadcn/ui (actions, forms, data display,
+    overlays, and product-specific composites) with states + a11y contract.
+  - WCAG 2.2 AA baseline, theming implementation, and an abridged CSS token
+    reference (drops straight into Tailwind/shadcn).
+- Built a companion **living style-guide** artifact — every token and component
+  rendered, with a working light/dark toggle.
+
+---
+
 ## Next Up
 
-**Phase 5 — Design System** (starts on your approval): the white-theme visual
-language — color tokens, typography scale, spacing, elevation, and the
-shadcn/ui-based component library that turns these wireframes into real UI.
+**Phase 6 — Folder Structure** (starts on your approval): the Next.js App Router
+project layout — module/bounded-context organisation, where services /
+repositories / tokens / components / Prisma live, and the conventions that keep
+the modular monolith clean.
