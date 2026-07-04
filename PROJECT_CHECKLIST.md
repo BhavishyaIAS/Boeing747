@@ -18,8 +18,8 @@ begins.
 | 2 | System Architecture | ✅ Done — approved | `docs/02-architecture.md` |
 | 3 | Database Design (schema + ERD) | ✅ Done — approved | `docs/03-database.md` |
 | 4 | UI/UX Wireframes | ✅ Done — approved | `docs/04-wireframes.md` |
-| 5 | Design System | ✅ Done — **awaiting approval** | `docs/05-design-system.md` |
-| 6 | Folder Structure | ⬜ Not started | `docs/06-folder-structure.md` |
+| 5 | Design System | ✅ Done — approved | `docs/05-design-system.md` |
+| 6 | Folder Structure | ✅ Done — **awaiting approval** | `docs/06-folder-structure.md` |
 | 7 | Backend APIs | ⬜ Not started | code + `docs/07-api.md` |
 | 8 | Authentication | ⬜ Not started | code |
 | 9 | Admin Panel | ⬜ Not started | code |
@@ -141,9 +141,28 @@ begins.
 
 ---
 
+## Phase 6 — Summary of Work Done
+
+- Authored the Folder Structure & Conventions (`docs/06-folder-structure.md`):
+  - **7 layout decisions (F1–F7)**: single Next.js app (monorepo-ready), `src/`
+    layering, feature-first `modules/<context>`, ports/adapters in `lib`, path
+    aliases + import-boundary lint, pnpm, colocated/isolated test split.
+  - Full **top-level** and **`src/` trees** with every route group mapped to its
+    wireframe ID and every folder's responsibility.
+  - The repeating **module anatomy** (index/service/repository/dto/types/test)
+    and the enforced dependency direction + golden import rule.
+  - Path-alias config, a "where things live" quick reference, naming/style
+    conventions, env/config contract, testing layout, and how the structure
+    scales to new exams / content types / modules / a mobile app.
+
+---
+
 ## Next Up
 
-**Phase 6 — Folder Structure** (starts on your approval): the Next.js App Router
-project layout — module/bounded-context organisation, where services /
-repositories / tokens / components / Prisma live, and the conventions that keep
-the modular monolith clean.
+**Phase 7 — Backend APIs** (starts on your approval): scaffold the Next.js
+project against this structure, wire Prisma + the `lib`/`server` infrastructure
+(db, redis, ports/adapters, authorize guard, error taxonomy, API helpers), and
+implement the first vertical API slices under `api/v1` with OpenAPI docs.
+
+> Note: Phase 7 is the first **code** phase — it will introduce `package.json`,
+> the Prisma schema, and real source files (no placeholder code).
