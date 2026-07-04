@@ -6,10 +6,12 @@
 **Depends on:** `docs/02-architecture.md`, `docs/03-database.md`, `docs/06-folder-structure.md`
 **Last Updated:** 2026-07-04
 
-> The first code phase. This documents the scaffolded backend: the Prisma schema,
-> the `lib`/`server` infrastructure, and two complete vertical API slices
-> (**Syllabus read**, **Content CRUD + workflow**). Auth wiring is Phase 8; until
-> then a dev actor header exercises the API (see §5).
+> This documents the scaffolded backend: the Prisma schema, the `lib`/`server`
+> infrastructure, two vertical API slices (**Syllabus read**, **Content CRUD +
+> workflow**), and — added in **Phase 8** — the full **authentication** surface
+> (Auth.js: Google + email/password + email OTP, verification & reset). Real
+> sessions now back `resolveActor()`; a dev-actor header remains for local,
+> non-production testing (see §5).
 
 ---
 
@@ -84,7 +86,28 @@ A single node with breadcrumb + immediate children (`NodeDetailDto`):
 ```
 `404` if the slug does not exist in the exam.
 
-### 3.2 Content (CRUD + workflow)
+### 3.2 Authentication (Phase 8)
+
+Auth.js (NextAuth v5) with JWT sessions. Sign-in via **Google**, **email +
+password**, or **email OTP**. The session JWT carries the user id + roles, which
+`resolveActor()` maps to the `Actor` consumed by `authorize()`.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET/POST /api/v1/auth/[...nextauth]` | Auth.js sign-in / callback / session (Google + Credentials `password` / `otp`) |
+| `POST /api/v1/auth/register` | Create a PENDING account; emails a verification OTP |
+| `POST /api/v1/auth/verify` | `{ email, otp }` → verify email, mark ACTIVE |
+| `POST /api/v1/auth/otp` | `{ email }` → email a one-time sign-in code (no enumeration) |
+| `POST /api/v1/auth/forgot-password` | `{ email }` → email a reset token (no enumeration) |
+| `POST /api/v1/auth/reset-password` | `{ email, token, password }` → set a new password |
+
+**Security properties:** passwords hashed with bcrypt (cost 12); one-time tokens
+stored only as SHA-256 hashes salted by identifier; OTP 10-min / reset 1-h / verify
+24-h expiries; single-use tokens; unverified accounts cannot sign in with a
+password; OAuth users are provisioned ACTIVE + verified with the STUDENT role;
+forgot-password and OTP never reveal whether an email exists.
+
+### 3.3 Content (CRUD + workflow)
 
 #### `GET /api/v1/content?exam=<uuid>&type=<ContentType?>&cursor=<uuid?>&limit=20`
 Lists **PUBLISHED** content for the exam. Requires `content:read`.

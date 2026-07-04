@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { auth } from "@server/auth";
 import type { Actor } from "./context";
 import { UnauthorizedError, ValidationError } from "./errors";
 
 /**
- * Resolves the request actor. Auth.js integration lands in Phase 8; until then,
- * a signed-in session is not yet available. To let the API be exercised end-to-
- * end in development, a non-production request may carry an `x-dev-actor` header
- * containing the actor JSON. In production this path is disabled and a missing
- * session always yields 401 — there is no fake auth in production.
+ * Resolves the request actor from the Auth.js session (the JWT carries the user
+ * id + roles). In non-production, a request may alternatively carry an
+ * `x-dev-actor` header with the actor JSON to exercise the API without going
+ * through OAuth. In production that shim is disabled and a missing session
+ * always yields 401 — there is no fake auth in production.
  */
 const actorSchema = z.object({
   userId: z.string().uuid(),
@@ -36,7 +37,16 @@ export async function resolveActor(req: Request): Promise<Actor> {
 }
 
 async function tryResolveActor(req: Request): Promise<Actor | null> {
-  // TODO(Phase 8): read the Auth.js session and map it to an Actor.
+  const session = await auth();
+  if (session?.user?.id) {
+    return {
+      userId: session.user.id,
+      email: session.user.email ?? "",
+      roles: session.user.roles ?? [],
+    };
+  }
+
+  // Non-production convenience: exercise the API without a full OAuth round-trip.
   if (process.env.NODE_ENV !== "production") {
     const header = req.headers.get("x-dev-actor");
     if (header) {

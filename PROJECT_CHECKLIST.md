@@ -20,8 +20,8 @@ begins.
 | 4 | UI/UX Wireframes | ✅ Done — approved | `docs/04-wireframes.md` |
 | 5 | Design System | ✅ Done — approved | `docs/05-design-system.md` |
 | 6 | Folder Structure | ✅ Done — approved | `docs/06-folder-structure.md` |
-| 7 | Backend APIs | ✅ Done — **awaiting approval** | code + `docs/07-api.md` |
-| 8 | Authentication | ⬜ Not started | code |
+| 7 | Backend APIs | ✅ Done — approved | code + `docs/07-api.md` |
+| 8 | Authentication | ✅ Done — **awaiting approval** | code |
 | 9 | Admin Panel | ⬜ Not started | code |
 | 10 | Student Dashboard | ⬜ Not started | code |
 | 11 | Syllabus Engine | ⬜ Not started | code |
@@ -183,9 +183,33 @@ begins.
 
 ---
 
+## Phase 8 — Summary of Work Done
+
+- **Auth.js (NextAuth v5)** wired in `src/server/auth`: JWT sessions, three
+  providers — **Google OAuth** (env-gated), **email + password**, and
+  **email OTP** — with `signIn`/`jwt`/`session` callbacks that provision OAuth
+  users and embed the user id + roles in the token.
+- **Real sessions back `resolveActor()`** — the dev-actor shim now only applies
+  in non-production as a fallback; production requires a real session (401 otherwise).
+- **Identity module auth building blocks:**
+  - `password.ts` (bcrypt cost 12), `tokens.ts` (OTP/URL tokens, SHA-256 hashing
+    salted by identifier, TTLs + expiry) — both pure.
+  - `identity.repository.ts` (users, roles, single-use verification tokens).
+  - `auth.service.ts`: register, email verification, email-OTP login, password
+    reset (request + reset), credential verification, OAuth provisioning — with
+    no-account-enumeration on forgot/OTP and unverified-login blocking.
+  - `session.ts` (build/load Actor), `dto.ts` (Zod: register/login/verify/otp/reset).
+- **Mail port + console adapter** (`lib/ports/mail.ts`, `lib/adapters/mail.console.ts`).
+- **Endpoints:** `auth/[...nextauth]`, `register`, `verify`, `otp`,
+  `forgot-password`, `reset-password`.
+- **Verified:** `tsc --noEmit` ✓ · **40 unit tests pass** (13 new: tokens + full
+  auth-service behaviour with mocked repo/mail). Fixed a real bug where
+  `ensureOAuthUser` returned a stale pre-verification record.
+
+---
+
 ## Next Up
 
-**Phase 8 — Authentication** (starts on your approval): wire Auth.js
-(email/password + Google + email OTP + verification/reset), replace the dev-actor
-shim with real sessions, and map sessions to the `Actor` consumed by
-`authorize()`.
+**Phase 9 — Admin Panel** (starts on your approval): the CMS surface — content
+list / editor / review screens and user/role management — built on the design
+system and backed by the content / workflow / identity APIs.
