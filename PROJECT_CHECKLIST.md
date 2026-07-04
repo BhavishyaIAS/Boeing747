@@ -15,8 +15,8 @@ begins.
 | Phase | Deliverable | Status | Artifact |
 |------|-------------|--------|----------|
 | 1 | Product Requirement Document (PRD) | ✅ Done — approved | `docs/01-PRD.md` |
-| 2 | System Architecture | ✅ Done — **awaiting approval** | `docs/02-architecture.md` |
-| 3 | Database Design (schema + ERD) | ⬜ Not started | `docs/03-database.md` |
+| 2 | System Architecture | ✅ Done — approved | `docs/02-architecture.md` |
+| 3 | Database Design (schema + ERD) | ✅ Done — **awaiting approval** | `docs/03-database.md` |
 | 4 | UI/UX Wireframes | ⬜ Not started | `docs/04-wireframes.md` |
 | 5 | Design System | ⬜ Not started | `docs/05-design-system.md` |
 | 6 | Folder Structure | ⬜ Not started | `docs/06-folder-structure.md` |
@@ -80,8 +80,30 @@ begins.
 
 ---
 
+## Phase 3 — Summary of Work Done
+
+- Authored the Database Design (`docs/03-database.md`): **40 tables** across 5
+  domains, fully normalized, with keys, FKs, constraints, indexes, enums, and
+  domain-grouped ER diagrams (Mermaid).
+- **9 design decisions (D1–D9)** documented with rationale, incl. the polymorphic
+  content model:
+  - **D1** Class Table Inheritance — shared `content_item` base + typed detail
+    tables (`question`, `reference_entity`, `visual`, `video`, `flashcard`,
+    `current_affair`).
+  - **D2** Rich bodies as validated JSONB in `content_version` (TipTap docs).
+  - **D3** Syllabus graph = adjacency + `syllabus_closure` (arbitrary depth) +
+    `node_link` interlinking.
+  - **D4** Immutable versioning; **D5** `exam_id` scoping everywhere;
+    **D6** Auth.js-native tables; **D7** Postgres FTS via `tsvector`+GIN;
+    **D8** UUIDv7 + soft delete; **D9** guarded polymorphic associations.
+- Covered: Identity/RBAC/audit, Syllabus graph, Content+Workflow+Media,
+  Learning/Progress, Tests + Answer-Writing (schema-ready, AI eval deferred),
+  Search, indexing strategy, integrity rules, and migration/seed plan.
+
+---
+
 ## Next Up
 
-**Phase 3 — Database Design** (starts on your approval): normalized PostgreSQL
-schema for the syllabus graph, polymorphic content model, workflow/versioning,
-RBAC, progress & tests — with indexes, constraints, and an ER diagram.
+**Phase 4 — UI/UX Wireframes** (starts on your approval): student reading
+experience, syllabus navigation, personal dashboard, admin CMS, and the
+editor + review workflow screens.
