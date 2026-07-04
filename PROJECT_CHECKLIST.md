@@ -82,9 +82,9 @@ begins.
 
 ## Phase 3 — Summary of Work Done
 
-- Authored the Database Design (`docs/03-database.md`): **40 tables** across 5
-  domains, fully normalized, with keys, FKs, constraints, indexes, enums, and
-  domain-grouped ER diagrams (Mermaid).
+- Authored the Database Design (`docs/03-database.md`): **45 tables + 1
+  materialized view** across 5 domains, fully normalized, with keys, FKs,
+  constraints, indexes, enums, and domain-grouped ER diagrams (Mermaid).
 - **9 design decisions (D1–D9)** documented with rationale, incl. the polymorphic
   content model:
   - **D1** Class Table Inheritance — shared `content_item` base + typed detail

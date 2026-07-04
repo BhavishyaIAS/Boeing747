@@ -543,19 +543,20 @@ erDiagram
 
 ---
 
-## 11. Table Catalogue (count = 40)
+## 11. Table Catalogue (45 tables + 1 materialized view)
 
 Identity/Access/Audit (11): exam, user, account, session, verification_token,
 role, permission, role_permission, user_role, audit_log, notification.
 Taxonomy (5): syllabus_node, syllabus_closure, node_link, keyword, node_keyword.
-Content/Workflow/Media (14): content_item, content_version, content_node,
+Content/Workflow/Media (15): content_item, content_version, content_node,
 question, question_option, reference_entity, visual, video, video_timestamp,
 flashcard, flashcard_deck, current_affair, media_asset, content_media,
-content_review. *(15 incl. content_review)*
-Learning (6): user_node_progress, reading_history, study_session, bookmark,
-highlight, achievement, user_achievement. *(7 incl. user_achievement)*
-Tests/AW (8): test, test_question, test_attempt, test_answer, answer_prompt,
-answer_submission, answer_evaluation, + leaderboard (materialized view).
+content_review.
+Learning (7): user_node_progress, reading_history, study_session, bookmark,
+highlight, achievement, user_achievement.
+Tests/AW (7 + 1 view): test, test_question, test_attempt, test_answer,
+answer_prompt, answer_submission, answer_evaluation, + `leaderboard`
+(materialized view).
 
 > Tier-2/3 modules (interview guidance, community, payments) are **not** created
 > at launch but slot in as new tables without touching the core, per Phase 2 §14.
