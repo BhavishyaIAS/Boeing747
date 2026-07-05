@@ -15,10 +15,12 @@ import {
 import { ConflictError, ForbiddenError, NotFoundError } from "@server/errors";
 import { prismaAuditSink, type AuditSink } from "@server/audit";
 import { estimateReadingSeconds, extractPlainText, slugify } from "@lib/utils/text";
+import type { ContentStatus, ContentType } from "@prisma/client";
 import {
   DuplicateSlugError,
   PrismaContentRepository,
   type ContentRepository,
+  type ItemWithBody,
 } from "./content.repository";
 import type { CreateContentInput } from "./dto";
 
@@ -118,6 +120,73 @@ export class ContentService {
       throw new NotFoundError("Content not found");
     }
     return item;
+  }
+
+  /** Management listing (all statuses) for the CMS. Requires content:update. */
+  async listManaged(
+    actor: Actor,
+    examId: string,
+    params: { type?: ContentType; status?: ContentStatus; limit: number; cursor?: string | null },
+  ): Promise<ContentPage> {
+    authorize(actor, PERMISSIONS.CONTENT_UPDATE, { examId });
+    const rows = await this.repo.listManaged({
+      examId,
+      type: params.type,
+      status: params.status,
+      limit: params.limit,
+      cursor: params.cursor ?? null,
+    });
+    const hasMore = rows.length > params.limit;
+    const items = hasMore ? rows.slice(0, params.limit) : rows;
+    const last = items[items.length - 1];
+    return { items, nextCursor: hasMore && last ? last.id : null };
+  }
+
+  /** Fetch an item plus its current body for the editor. Requires content:update. */
+  async getForEditing(actor: Actor, examId: string, id: string): Promise<ItemWithBody> {
+    authorize(actor, PERMISSIONS.CONTENT_UPDATE, { examId });
+    const found = await this.repo.findByIdWithBody(id);
+    if (!found || found.item.examId !== examId) throw new NotFoundError("Content not found");
+    return found;
+  }
+
+  /**
+   * Save an edit as a new immutable version. Only DRAFT items are editable —
+   * to change published content, REVISE it back to draft first.
+   */
+  async updateDraft(
+    actor: Actor,
+    examId: string,
+    id: string,
+    input: { title?: string; body: Record<string, unknown>; changeNote?: string },
+  ): Promise<ContentItem> {
+    authorize(actor, PERMISSIONS.CONTENT_UPDATE, { examId });
+
+    const item = await this.repo.findById(id);
+    if (!item || item.examId !== examId) throw new NotFoundError("Content not found");
+    if (item.status !== "DRAFT") {
+      throw new ConflictError("Only drafts can be edited — revise the content back to draft first");
+    }
+
+    const plainText = extractPlainText(input.body);
+    const updated = await this.repo.addVersion({
+      contentItemId: id,
+      body: input.body as Prisma.InputJsonValue,
+      plainText,
+      changeNote: input.changeNote ?? null,
+      createdById: actor.userId,
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      readingTimeSeconds: estimateReadingSeconds(plainText),
+    });
+
+    await this.audit.record({
+      actorId: actor.userId,
+      action: "content.update",
+      targetType: "content_item",
+      targetId: id,
+      examId,
+    });
+    return updated;
   }
 
   async transition(

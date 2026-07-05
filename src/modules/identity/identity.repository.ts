@@ -21,6 +21,11 @@ export interface ActorRoleRow {
   examId: string | null;
 }
 
+export interface UserWithRoles {
+  user: User;
+  roles: ActorRoleRow[];
+}
+
 export interface IdentityRepository {
   findUserByEmail(email: string): Promise<User | null>;
   findUserById(id: string): Promise<User | null>;
@@ -28,6 +33,8 @@ export interface IdentityRepository {
   setPasswordHash(userId: string, passwordHash: string): Promise<void>;
   markEmailVerified(userId: string): Promise<void>;
   assignRole(userId: string, role: RoleKey, examId?: string | null): Promise<void>;
+  removeRole(userId: string, role: RoleKey): Promise<void>;
+  listUsers(params: { limit: number; cursor?: string | null }): Promise<UserWithRoles[]>;
 
   createToken(token: StoredToken): Promise<void>;
   /** Deletes the matching token (single-use) and reports whether it was valid. */
@@ -78,6 +85,26 @@ export class PrismaIdentityRepository implements IdentityRepository {
       where: { userId_roleId: { userId, roleId: roleRow.id } },
       update: {},
       create: { userId, roleId: roleRow.id, examId },
+    });
+  }
+
+  async removeRole(userId: string, role: RoleKey): Promise<void> {
+    const roleRow = await this.db.role.findUnique({ where: { key: role } });
+    if (!roleRow) return;
+    await this.db.userRole.deleteMany({ where: { userId, roleId: roleRow.id } });
+  }
+
+  async listUsers(params: { limit: number; cursor?: string | null }): Promise<UserWithRoles[]> {
+    const rows = await this.db.user.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: params.limit + 1,
+      ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+      include: { roles: { include: { role: true } } },
+    });
+    return rows.map((r) => {
+      const { roles, ...user } = r;
+      return { user, roles: roles.map((ur) => ({ role: ur.role.key, examId: ur.examId })) };
     });
   }
 

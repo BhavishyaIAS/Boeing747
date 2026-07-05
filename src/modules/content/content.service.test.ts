@@ -4,8 +4,11 @@ import { ContentService } from "./content.service";
 import {
   DuplicateSlugError,
   type AddReviewData,
+  type AddVersionData,
   type ContentRepository,
   type CreateContentData,
+  type ItemWithBody,
+  type ListManagedParams,
   type ListPublishedParams,
   type UpdateStatusData,
 } from "./content.repository";
@@ -53,8 +56,34 @@ class FakeContentRepo implements ContentRepository {
     this.items.set(item.id, item);
     return item;
   }
+  versionsAdded = 0;
+
   async findById(id: string): Promise<ContentItem | null> {
     return this.items.get(id) ?? null;
+  }
+  async findByIdWithBody(id: string): Promise<ItemWithBody | null> {
+    const item = this.items.get(id);
+    return item ? { item, body: {} } : null;
+  }
+  async addVersion(data: AddVersionData): Promise<ContentItem> {
+    this.versionsAdded += 1;
+    const it = this.items.get(data.contentItemId);
+    if (!it) throw new Error("not seeded");
+    const updated: ContentItem = {
+      ...it,
+      currentVersionId: `v${this.versionsAdded + 1}`,
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.readingTimeSeconds !== undefined
+        ? { readingTimeSeconds: data.readingTimeSeconds }
+        : {}),
+    };
+    this.items.set(it.id, updated);
+    return updated;
+  }
+  async listManaged(params: ListManagedParams): Promise<ContentItem[]> {
+    return [...this.items.values()].filter(
+      (i) => i.examId === params.examId && (!params.status || i.status === params.status),
+    );
   }
   async createWithVersion(data: CreateContentData): Promise<ContentItem> {
     if (this.duplicate) throw new DuplicateSlugError();
@@ -145,6 +174,52 @@ describe("ContentService.getById", () => {
     repo.seed(makeItem({ id: "c1", examId: "exam-2", authorId: "u-editor", status: "PUBLISHED" }));
     const svc = new ContentService(repo, new FakeAudit());
     await expect(svc.getById(student, "exam-1", "c1")).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe("ContentService.listManaged", () => {
+  it("requires content:update and returns all statuses", async () => {
+    const repo = new FakeContentRepo();
+    repo.seed(makeItem({ id: "c1", examId: "exam-1", authorId: "u-editor", status: "DRAFT" }));
+    repo.seed(makeItem({ id: "c2", examId: "exam-1", authorId: "u-editor", status: "PUBLISHED" }));
+    const svc = new ContentService(repo, new FakeAudit());
+    await expect(svc.listManaged(student, "exam-1", { limit: 10 })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    const page = await svc.listManaged(editor, "exam-1", { limit: 10 });
+    expect(page.items).toHaveLength(2);
+  });
+});
+
+describe("ContentService.updateDraft", () => {
+  it("saves a new version for a draft", async () => {
+    const repo = new FakeContentRepo();
+    repo.seed(makeItem({ id: "c1", examId: "exam-1", authorId: "u-editor", status: "DRAFT" }));
+    const svc = new ContentService(repo, new FakeAudit());
+    const updated = await svc.updateDraft(editor, "exam-1", "c1", {
+      title: "New Title",
+      body: bodyWithWords,
+    });
+    expect(updated.title).toBe("New Title");
+    expect(repo.versionsAdded).toBe(1);
+  });
+
+  it("refuses to edit non-draft content", async () => {
+    const repo = new FakeContentRepo();
+    repo.seed(makeItem({ id: "c1", examId: "exam-1", authorId: "u-editor", status: "PUBLISHED" }));
+    const svc = new ContentService(repo, new FakeAudit());
+    await expect(
+      svc.updateDraft(editor, "exam-1", "c1", { body: bodyWithWords }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("forbids a student from editing", async () => {
+    const repo = new FakeContentRepo();
+    repo.seed(makeItem({ id: "c1", examId: "exam-1", authorId: "u-editor", status: "DRAFT" }));
+    const svc = new ContentService(repo, new FakeAudit());
+    await expect(
+      svc.updateDraft(student, "exam-1", "c1", { body: bodyWithWords }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
 

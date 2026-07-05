@@ -21,8 +21,8 @@ begins.
 | 5 | Design System | ✅ Done — approved | `docs/05-design-system.md` |
 | 6 | Folder Structure | ✅ Done — approved | `docs/06-folder-structure.md` |
 | 7 | Backend APIs | ✅ Done — approved | code + `docs/07-api.md` |
-| 8 | Authentication | ✅ Done — **awaiting approval** | code |
-| 9 | Admin Panel | ⬜ Not started | code |
+| 8 | Authentication | ✅ Done — approved | code |
+| 9 | Admin Panel | ✅ Done — **awaiting approval** | code |
 | 10 | Student Dashboard | ⬜ Not started | code |
 | 11 | Syllabus Engine | ⬜ Not started | code |
 | 12 | Notes Module | ⬜ Not started | code |
@@ -208,8 +208,34 @@ begins.
 
 ---
 
+## Phase 9 — Summary of Work Done
+
+**First UI phase.** Styling foundation + the CMS surface, backed by real services.
+
+- **Styling foundation:** Tailwind v4 + `@tailwindcss/postcss`; `globals.css`
+  encodes the Phase 5 design tokens as CSS variables (light + dark, class-driven);
+  `cn()` helper.
+- **UI primitives** (shadcn-style, tokenized): Button (cva variants), Badge +
+  `StatusBadge`, Card, Input/Textarea/Select/Label, Table — plus AppShell
+  (`AdminShell`), `NavLink`, and a client `ThemeToggle`.
+- **Admin console** (`/admin`, dynamic + access-gated in the layout via `can()`):
+  - Overview, **Content list** (status filters), **New content**, **Content
+    editor** (title + body edit that saves a new version; workflow action
+    buttons; reviewer approve/request-changes/reject with comment + separation-
+    of-duties notice), and **Users & Roles** (assign/revoke, Super-Admin guard).
+  - Mutations via **Server Actions** calling the domain services directly.
+- **Backend additions** (all unit-tested): content `listManaged` /
+  `getForEditing` / `updateDraft` (edit = new immutable version, drafts only);
+  identity `listUsers` / `removeRole` + `AdminIdentityService` (user:manage;
+  Super-Admin grant needs role:manage).
+- **Verified:** `tsc --noEmit` ✓ · **47 unit tests** ✓ · **`next build` ✓**
+  (all 17 routes compile; admin routes dynamic; Tailwind + RSC/client boundaries
+  validated).
+
+---
+
 ## Next Up
 
-**Phase 9 — Admin Panel** (starts on your approval): the CMS surface — content
-list / editor / review screens and user/role management — built on the design
-system and backed by the content / workflow / identity APIs.
+**Phase 10 — Student Dashboard** (starts on your approval): the authenticated
+student home — continue-reading, progress/coverage, revision-due, and weak areas
+— reusing the shell + design system, backed by the learning/progress data.

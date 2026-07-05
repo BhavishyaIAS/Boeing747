@@ -36,6 +36,25 @@ export async function resolveActor(req: Request): Promise<Actor> {
   return actor;
 }
 
+/** Actor from the Auth.js session, for Server Components / Server Actions. */
+export async function currentActor(): Promise<Actor | null> {
+  const session = await auth();
+  if (session?.user?.id) {
+    return {
+      userId: session.user.id,
+      email: session.user.email ?? "",
+      roles: session.user.roles ?? [],
+    };
+  }
+  return null;
+}
+
+export async function requireActor(): Promise<Actor> {
+  const actor = await currentActor();
+  if (!actor) throw new UnauthorizedError();
+  return actor;
+}
+
 async function tryResolveActor(req: Request): Promise<Actor | null> {
   const session = await auth();
   if (session?.user?.id) {

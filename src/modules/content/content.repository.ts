@@ -30,6 +30,25 @@ export interface ListPublishedParams {
   cursor?: string | null;
 }
 
+export interface ListManagedParams extends ListPublishedParams {
+  status?: ContentStatus;
+}
+
+export interface AddVersionData {
+  contentItemId: string;
+  body: Prisma.InputJsonValue;
+  plainText: string;
+  changeNote: string | null;
+  createdById: string;
+  title?: string;
+  readingTimeSeconds?: number;
+}
+
+export interface ItemWithBody {
+  item: ContentItem;
+  body: Prisma.JsonValue;
+}
+
 export interface UpdateStatusData {
   status: ContentStatus;
   publishedAt?: Date;
@@ -48,8 +67,11 @@ export class DuplicateSlugError extends Error {}
 
 export interface ContentRepository {
   findById(id: string): Promise<ContentItem | null>;
+  findByIdWithBody(id: string): Promise<ItemWithBody | null>;
   createWithVersion(data: CreateContentData): Promise<ContentItem>;
+  addVersion(data: AddVersionData): Promise<ContentItem>;
   listPublished(params: ListPublishedParams): Promise<ContentItem[]>;
+  listManaged(params: ListManagedParams): Promise<ContentItem[]>;
   updateStatus(id: string, data: UpdateStatusData): Promise<ContentItem>;
   addReview(data: AddReviewData): Promise<void>;
 }
@@ -59,6 +81,46 @@ export class PrismaContentRepository implements ContentRepository {
 
   findById(id: string): Promise<ContentItem | null> {
     return this.db.contentItem.findFirst({ where: { id, deletedAt: null } });
+  }
+
+  async findByIdWithBody(id: string): Promise<ItemWithBody | null> {
+    const row = await this.db.contentItem.findFirst({
+      where: { id, deletedAt: null },
+      include: { currentVersion: true },
+    });
+    if (!row) return null;
+    const { currentVersion, ...item } = row;
+    return { item, body: currentVersion?.body ?? {} };
+  }
+
+  async addVersion(data: AddVersionData): Promise<ContentItem> {
+    return this.db.$transaction(async (tx) => {
+      const last = await tx.contentVersion.findFirst({
+        where: { contentItemId: data.contentItemId },
+        orderBy: { versionNumber: "desc" },
+        select: { versionNumber: true },
+      });
+      const version = await tx.contentVersion.create({
+        data: {
+          contentItemId: data.contentItemId,
+          versionNumber: (last?.versionNumber ?? 0) + 1,
+          body: data.body,
+          plainText: data.plainText,
+          changeNote: data.changeNote,
+          createdById: data.createdById,
+        },
+      });
+      return tx.contentItem.update({
+        where: { id: data.contentItemId },
+        data: {
+          currentVersionId: version.id,
+          ...(data.title !== undefined ? { title: data.title } : {}),
+          ...(data.readingTimeSeconds !== undefined
+            ? { readingTimeSeconds: data.readingTimeSeconds }
+            : {}),
+        },
+      });
+    });
   }
 
   async createWithVersion(data: CreateContentData): Promise<ContentItem> {
@@ -121,6 +183,21 @@ export class PrismaContentRepository implements ContentRepository {
         ...(type ? { type } : {}),
       },
       orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+  }
+
+  listManaged(params: ListManagedParams): Promise<ContentItem[]> {
+    const { examId, type, status, limit, cursor } = params;
+    return this.db.contentItem.findMany({
+      where: {
+        examId,
+        deletedAt: null,
+        ...(type ? { type } : {}),
+        ...(status ? { status } : {}),
+      },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });

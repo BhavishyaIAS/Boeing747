@@ -3,11 +3,14 @@ export { ContentService, contentService, type ContentPage } from "./content.serv
 export {
   createContentSchema,
   listContentQuerySchema,
+  updateContentSchema,
   transitionSchema,
   type CreateContentInput,
   type ListContentQuery,
+  type UpdateContentInput,
   type TransitionInput,
 } from "./dto";
+export type { ItemWithBody } from "./content.repository";
 export type {
   ContentRepository,
   CreateContentData,

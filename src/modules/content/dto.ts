@@ -28,6 +28,14 @@ export const listContentQuerySchema = z.object({
 });
 export type ListContentQuery = z.infer<typeof listContentQuerySchema>;
 
+/** Save an edit to a DRAFT item (creates a new version). */
+export const updateContentSchema = z.object({
+  title: z.string().min(3).max(300).optional(),
+  body: z.record(z.string(), z.unknown()),
+  changeNote: z.string().max(500).optional(),
+});
+export type UpdateContentInput = z.infer<typeof updateContentSchema>;
+
 /** Drive the editorial state machine. */
 export const transitionSchema = z.object({
   action: z.enum(WORKFLOW_ACTIONS),

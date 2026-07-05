@@ -11,11 +11,17 @@ export {
 } from "./rbac";
 
 export { AuthService, authService, type PublicUser, type AuthServiceDeps } from "./auth.service";
+export {
+  AdminIdentityService,
+  adminIdentityService,
+  type UsersPage,
+} from "./admin.service";
 export { buildActor, loadActor, loadActorByEmail } from "./session";
 export {
   PrismaIdentityRepository,
   type IdentityRepository,
   type ActorRoleRow,
+  type UserWithRoles,
 } from "./identity.repository";
 export { hashPassword, verifyPassword } from "./password";
 

@@ -6,7 +6,11 @@ import type {
   CreateUserData,
   IdentityRepository,
   StoredToken,
+  UserWithRoles,
 } from "./identity.repository";
+import { AdminIdentityService } from "./admin.service";
+import { ForbiddenError } from "@server/errors";
+import type { Actor } from "@server/context";
 import { isExpired } from "./tokens";
 import type { MailMessage, MailPort } from "@lib/ports/mail";
 import { ConflictError, UnauthorizedError, ValidationError } from "@server/errors";
@@ -81,6 +85,16 @@ class FakeIdentityRepo implements IdentityRepository {
   }
   async deleteTokens(identifier: string): Promise<void> {
     for (const [k, v] of this.tokens) if (v.identifier === identifier) this.tokens.delete(k);
+  }
+  async removeRole(userId: string, role: RoleKey): Promise<void> {
+    const list = (this.roles.get(userId) ?? []).filter((r) => r.role !== role);
+    this.roles.set(userId, list);
+  }
+  async listUsers(): Promise<UserWithRoles[]> {
+    return [...this.users.values()].map((user) => ({
+      user,
+      roles: this.roles.get(user.id) ?? [],
+    }));
   }
   async loadActorRoles(userId: string): Promise<ActorRoleRow[]> {
     return this.roles.get(userId) ?? [];
@@ -186,5 +200,37 @@ describe("AuthService — OTP login & OAuth", () => {
     expect(user.emailVerifiedAt).not.toBeNull();
     expect(user.status).toBe("ACTIVE");
     expect((await repo.loadActorRoles(user.id))[0]?.role).toBe("STUDENT");
+  });
+});
+
+describe("AdminIdentityService", () => {
+  const admin: Actor = { userId: "adm", email: "a@x.com", roles: [{ role: "ADMIN", examId: null }] };
+  const superAdmin: Actor = { userId: "su", email: "s@x.com", roles: [{ role: "SUPER_ADMIN", examId: null }] };
+  const student: Actor = { userId: "st", email: "st@x.com", roles: [{ role: "STUDENT", examId: null }] };
+
+  it("lists users only for user:manage holders", async () => {
+    const repo = new FakeIdentityRepo();
+    await repo.createUser({ email: "u@x.com", name: null, passwordHash: null, status: "ACTIVE" });
+    const svc = new AdminIdentityService(repo, { record: async () => {} });
+    await expect(svc.listUsers(student, { limit: 10 })).rejects.toBeInstanceOf(ForbiddenError);
+    const page = await svc.listUsers(admin, { limit: 10 });
+    expect(page.users).toHaveLength(1);
+  });
+
+  it("lets an admin assign a normal role", async () => {
+    const repo = new FakeIdentityRepo();
+    const user = await repo.createUser({ email: "u@x.com", name: null, passwordHash: null, status: "ACTIVE" });
+    const svc = new AdminIdentityService(repo, { record: async () => {} });
+    await svc.assignRole(admin, user.id, "CONTENT_EDITOR");
+    expect((await repo.loadActorRoles(user.id)).map((r) => r.role)).toContain("CONTENT_EDITOR");
+  });
+
+  it("requires role:manage (super admin) to grant SUPER_ADMIN", async () => {
+    const repo = new FakeIdentityRepo();
+    const user = await repo.createUser({ email: "u@x.com", name: null, passwordHash: null, status: "ACTIVE" });
+    const svc = new AdminIdentityService(repo, { record: async () => {} });
+    await expect(svc.assignRole(admin, user.id, "SUPER_ADMIN")).rejects.toBeInstanceOf(ForbiddenError);
+    await svc.assignRole(superAdmin, user.id, "SUPER_ADMIN");
+    expect((await repo.loadActorRoles(user.id)).map((r) => r.role)).toContain("SUPER_ADMIN");
   });
 });
