@@ -28,8 +28,8 @@ begins.
 | 12 | Notes Module | ✅ Done — approved | code |
 | 13 | PYQ Module | ✅ Done — approved | code |
 | 14 | Current Affairs Module | ✅ Done — approved | code |
-| 15 | Testing | ✅ Done — **awaiting approval** | tests + `docs/08-testing.md` |
-| 16 | Deployment | ⬜ Not started | CI/CD + infra |
+| 15 | Testing | ✅ Done — approved | tests + `docs/08-testing.md` |
+| 16 | Deployment | ✅ Done — **awaiting approval** | Docker/CI + `docs/09-deployment.md` |
 
 ---
 
@@ -358,9 +358,32 @@ begins.
 
 ---
 
-## Next Up
+## Phase 16 — Summary of Work Done
 
-**Phase 16 — Deployment** (starts on your approval): the deployment story —
-Dockerfile + docker-compose (app + Postgres + Redis), production configuration,
-environment/secrets, migration + seed runbook, and Vercel deployment notes —
-completing the phased build.
+- **Containerisation:** multi-stage `Dockerfile` (Debian slim + pnpm) producing a
+  lean Next.js **standalone** runtime as a non-root user; the traced bundle
+  includes the `debian-openssl-3.0.x` Prisma engine (verified).
+- **`docker-compose.yml`:** Postgres + Redis + a one-shot **migrate** job
+  (migrate deploy → raw-SQL FTS/matview → seed) + the app, which starts only
+  after migrate completes successfully.
+- **Health check:** `GET /api/v1/health` (200 when DB reachable, else 503).
+- **`output: "standalone"`** in `next.config`; `.dockerignore` added.
+- **Deployment runbook** (`docs/09-deployment.md`): env contract, DB bootstrap,
+  local dev, Docker self-host, Vercel, operations (health/backups/leaderboard
+  refresh/secrets), and the scaling path.
+- **README** refreshed to a finished-project overview + quick start.
+- **Verified:** `tsc --noEmit` ✓ · **90 tests** ✓ · **`next build` (standalone)** ✓.
+
+---
+
+## 🎉 Build complete
+
+All 16 phases are delivered. The platform is a typed, tested, containerised
+modular monolith: architecture → DB (45 tables) → design system → backend
+(`/api/v1`) → Auth.js → admin CMS → student app (dashboard, 960-node syllabus
+engine, reader, PYQs, current affairs) → 90-test suite + CI → Docker/Vercel deploy.
+
+**Possible next steps (Tier-1/2/3 from the PRD, not yet built):** Test Series,
+Answer Writing (faculty + AI eval), Interview Guidance, richer analytics, the
+TipTap rich editor, Meilisearch upgrade, notifications, and the mobile app — each
+slots into the existing module structure without core rework.
