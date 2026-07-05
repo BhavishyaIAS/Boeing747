@@ -3,6 +3,7 @@ import {
   PERMISSION_CATALOGUE,
   ROLE_PERMISSIONS,
 } from "../src/modules/identity/rbac";
+import { hashPassword } from "../src/modules/identity/password";
 
 const prisma = new PrismaClient();
 
@@ -90,15 +91,21 @@ async function main(): Promise<void> {
     create: { key: "APPSC_GROUP_1", name: "APPSC Group-1", description: "Andhra Pradesh Group-1" },
   });
 
+  // Optional: set a password on the super admin so email/password login works
+  // out of the box in development. Provide SEED_ADMIN_PASSWORD to enable.
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const passwordHash = adminPassword ? await hashPassword(adminPassword) : null;
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@bhavishyaias.app" },
-    update: {},
+    update: passwordHash ? { passwordHash } : {},
     create: {
       email: "admin@bhavishyaias.app",
       name: "Super Admin",
       status: "ACTIVE",
       emailVerifiedAt: new Date(),
       primaryExamId: exam.id,
+      passwordHash,
     },
   });
   const superRoleId = roleId.get("SUPER_ADMIN");
@@ -121,6 +128,11 @@ async function main(): Promise<void> {
   ]);
 
   console.log("Seed complete: RBAC, exam, super admin, and a sample syllabus slice.");
+  console.log(
+    passwordHash
+      ? "Super admin password set from SEED_ADMIN_PASSWORD (admin@bhavishyaias.app)."
+      : "Tip: set SEED_ADMIN_PASSWORD to enable password login for admin@bhavishyaias.app.",
+  );
 }
 
 main()

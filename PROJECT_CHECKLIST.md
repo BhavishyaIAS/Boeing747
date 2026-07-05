@@ -22,8 +22,8 @@ begins.
 | 6 | Folder Structure | ✅ Done — approved | `docs/06-folder-structure.md` |
 | 7 | Backend APIs | ✅ Done — approved | code + `docs/07-api.md` |
 | 8 | Authentication | ✅ Done — approved | code |
-| 9 | Admin Panel | ✅ Done — **awaiting approval** | code |
-| 10 | Student Dashboard | ⬜ Not started | code |
+| 9 | Admin Panel | ✅ Done — approved | code |
+| 10 | Student Dashboard | ✅ Done — **awaiting approval** | code |
 | 11 | Syllabus Engine | ⬜ Not started | code |
 | 12 | Notes Module | ⬜ Not started | code |
 | 13 | PYQ Module | ⬜ Not started | code |
@@ -234,8 +234,28 @@ begins.
 
 ---
 
+## Phase 10 — Summary of Work Done
+
+- **Learning module** (`src/modules/learning`): a progress read model
+  (`ProgressRepository`) + `ProgressService.getDashboard()` aggregating
+  continue-reading, weekly study minutes, topics-read, revision-due, per-subject
+  coverage (via the closure table: mastered ÷ descendants), a pure
+  `computeStreak()`, and coverage-derived focus areas.
+- **Student shell** (`StudentShell`) + student nav; generalized `NavLink` with an
+  `exact` flag; a `Progress` primitive.
+- **Dashboard** (`/app`, gated + dynamic): greeting + streak, continue-reading,
+  this-week tiles, syllabus-coverage bars, revision-due list, and focus areas —
+  each with a real empty state for new users.
+- **Seed convenience:** optional `SEED_ADMIN_PASSWORD` sets the super-admin's
+  password so email/password login works out of the box.
+- **Verified:** `tsc --noEmit` ✓ · **54 unit tests** ✓ (7 new: streak + dashboard
+  aggregation + empty state + authorization) · **`next build` ✓** (`/app` dynamic).
+
+---
+
 ## Next Up
 
-**Phase 10 — Student Dashboard** (starts on your approval): the authenticated
-student home — continue-reading, progress/coverage, revision-due, and weak areas
-— reusing the shell + design system, backed by the learning/progress data.
+**Phase 11 — Syllabus Engine** (starts on your approval): the student-facing
+syllabus graph — the two-pane tree browser and node hub (breadcrumb, children,
+attached content) — plus per-user node progress tracking, wired to the taxonomy
+service and the design system.

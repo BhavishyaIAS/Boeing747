@@ -9,13 +9,15 @@ export function NavLink({
   href,
   label,
   icon: Icon,
+  exact = false,
 }: {
   href: string;
   label: string;
   icon: LucideIcon;
+  exact?: boolean;
 }) {
   const pathname = usePathname();
-  const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+  const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   return (
     <Link
       href={href}
