@@ -122,7 +122,7 @@ async function ensurePublished(
   examId: string,
   authorId: string,
   input: {
-    type: "QUESTION" | "MODEL_ANSWER";
+    type: "QUESTION" | "MODEL_ANSWER" | "CURRENT_AFFAIR" | "NOTE";
     title: string;
     slug: string;
     body: object;
@@ -306,6 +306,84 @@ async function seedSamplePyqs(examId: string, authorId: string): Promise<number>
   return count;
 }
 
+async function seedSampleCurrentAffairs(examId: string, authorId: string): Promise<number> {
+  const items: {
+    title: string;
+    slug: string;
+    cadence: "DAILY" | "WEEKLY" | "MONTHLY";
+    region: "ANDHRA_PRADESH" | "NATIONAL" | "INTERNATIONAL";
+    category: string;
+    publishDate: string;
+    node: string;
+    body: string[];
+  }[] = [
+    {
+      title: "RBI holds the repo rate steady",
+      slug: "ca-rbi-repo-rate-hold",
+      cadence: "DAILY",
+      region: "NATIONAL",
+      category: "Economy",
+      publishDate: "2026-07-04",
+      node: "Money, Banking",
+      body: [
+        "The Reserve Bank of India's Monetary Policy Committee voted to keep the repo rate unchanged, citing balanced inflation and growth dynamics.",
+        "Why in news: signals monetary policy continuity; relevant to banking, inflation targeting and the RBI's mandate.",
+      ],
+    },
+    {
+      title: "Andhra Pradesh launches a new irrigation scheme",
+      slug: "ca-ap-irrigation-scheme",
+      cadence: "WEEKLY",
+      region: "ANDHRA_PRADESH",
+      category: "Andhra Pradesh",
+      publishDate: "2026-07-03",
+      node: "Andhra Pradesh",
+      body: [
+        "The Andhra Pradesh government announced a new lift-irrigation initiative to expand assured irrigation across drought-prone districts.",
+        "Why in news: directly relevant to AP economy, agriculture and river-water utilisation themes.",
+      ],
+    },
+    {
+      title: "India ratifies a global biodiversity commitment",
+      slug: "ca-india-biodiversity-commitment",
+      cadence: "MONTHLY",
+      region: "INTERNATIONAL",
+      category: "Environment",
+      publishDate: "2026-07-01",
+      node: "Environment",
+      body: [
+        "India formalised its commitment under an international biodiversity framework, setting targets for conservation and restoration.",
+        "Why in news: links to environment, climate diplomacy and India's international commitments.",
+      ],
+    },
+  ];
+
+  let count = 0;
+  for (const it of items) {
+    const id = await ensurePublished(examId, authorId, {
+      type: "CURRENT_AFFAIR",
+      title: it.title,
+      slug: it.slug,
+      body: doc(it.body),
+    });
+    await prisma.currentAffair.upsert({
+      where: { contentItemId: id },
+      update: {},
+      create: {
+        contentItemId: id,
+        cadence: it.cadence,
+        region: it.region,
+        category: it.category,
+        publishDate: new Date(it.publishDate),
+      },
+    });
+    const nodeId = await findNode(examId, it.node);
+    if (nodeId) await linkNode(id, nodeId);
+    count += 1;
+  }
+  return count;
+}
+
 async function main(): Promise<void> {
   const roleId = await seedRbac();
 
@@ -344,11 +422,12 @@ async function main(): Promise<void> {
   // The official APPSC Group-1 syllabus (Prelims + Mains, micro-theme grain).
   const nodeCount = await seedSyllabusTree(exam.id, buildAppscSyllabus());
 
-  // A few sample PYQs so the module is demonstrable end-to-end.
+  // A few sample PYQs + current affairs so the modules are demonstrable.
   const pyqCount = await seedSamplePyqs(exam.id, admin.id);
+  const caCount = await seedSampleCurrentAffairs(exam.id, admin.id);
 
   console.log(
-    `Seed complete: RBAC, exam, super admin, ${nodeCount} syllabus nodes, ${pyqCount} sample PYQs.`,
+    `Seed complete: RBAC, exam, super admin, ${nodeCount} syllabus nodes, ${pyqCount} PYQs, ${caCount} current affairs.`,
   );
   console.log(
     passwordHash

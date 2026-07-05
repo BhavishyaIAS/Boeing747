@@ -26,8 +26,8 @@ begins.
 | 10 | Student Dashboard | ✅ Done — approved | code |
 | 11 | Syllabus Engine | ✅ Done — approved | code |
 | 12 | Notes Module | ✅ Done — approved | code |
-| 13 | PYQ Module | ✅ Done — **awaiting approval** | code |
-| 14 | Current Affairs Module | ⬜ Not started | code |
+| 13 | PYQ Module | ✅ Done — approved | code |
+| 14 | Current Affairs Module | ✅ Done — **awaiting approval** | code |
 | 15 | Testing | ⬜ Not started | tests |
 | 16 | Deployment | ⬜ Not started | CI/CD + infra |
 
@@ -323,8 +323,25 @@ begins.
 
 ---
 
+## Phase 14 — Summary of Work Done
+
+- **Current Affairs module** (`src/modules/current-affairs`): `CurrentAffairsService`
+  + repository over the `current_affair` content type — `list` (cadence/region/
+  category filters, cursor pagination), `categories` (dynamic facet), and
+  `getBySlug` (article body + syllabus linkage). Requires `ca:read`.
+- **Feed** (`/app/current-affairs`): cadence tabs (Daily/Weekly/Monthly) + region
+  and category filters; dated cards with region badge, category, and topic chips.
+- **Detail** (`/app/current-affairs/[slug]`): article (RichText) with cadence/
+  region/category/date meta and syllabus-linkage chips.
+- **Sample data:** seed now creates 3 current-affairs items (National / AP /
+  International, across daily/weekly/monthly), linked to syllabus nodes.
+- **Verified:** `tsc --noEmit` ✓ · **71 unit tests** ✓ (3 new: CA filters +
+  pagination + authorization + not-found) · **`next build` ✓**.
+
+---
+
 ## Next Up
 
-**Phase 14 — Current Affairs Module** (starts on your approval): the daily/weekly/
-monthly current-affairs feed with subject/region/category filters, backed by the
-`current_affair` content type and linked to syllabus nodes.
+**Phase 15 — Testing** (starts on your approval): broaden automated coverage —
+integration tests for the API route handlers / services, component & a11y checks,
+and wiring the test suite into a CI workflow (GitHub Actions).
