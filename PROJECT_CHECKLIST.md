@@ -267,11 +267,15 @@ begins.
   Actions), sub-topics grid with status dots, and attached study material grouped
   by content type — with empty states throughout.
 - **UI:** `NodeStatusBadge` / `NodeStatusDot` reusing the status scale.
-- **Real syllabus data:** encoded the **official APPSC Group-1 syllabus** (Prelims
-  + Mains, 2018 notification) from the provided PDFs into
-  `prisma/syllabus/appsc-group1.ts` — **131 nodes** (9 papers → 19 units → 103
-  themes) with summaries + exam-angle notes; the seed now populates the full graph
-  (globally-unique readable slugs, closure rows) instead of the sample slice.
+- **Real syllabus data (micro-theme grain):** encoded the **official APPSC
+  Group-1 syllabus** at full micro-theme depth from the provided dataset. The
+  seed builds the graph from `prisma/syllabus/appsc-microthemes.json` (458
+  micro-themes) via `microthemes.ts` → **960 nodes** across the full 5-level
+  hierarchy: 9 papers (SUBJECT) → 39 sections (UNIT) → 97 units (THEME) → 357
+  themes (SUB_THEME) → 458 micro-themes (MICRO_THEME). Leaf slugs use the stable
+  micro-theme ids; each leaf carries cognitive-level + geographic-scope +
+  Prelims/Mains exam-angle metadata. Idempotent seeder with closure rows;
+  validated 0 slug collisions.
 - **Verified:** `tsc --noEmit` ✓ · **59 unit tests** ✓ (5 new: revision scheduler
   + markStatus behaviour + authorization) · syllabus tree validated (0 slug
   collisions) · **`next build` ✓**.

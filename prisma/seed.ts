@@ -4,7 +4,7 @@ import {
   ROLE_PERMISSIONS,
 } from "../src/modules/identity/rbac";
 import { hashPassword } from "../src/modules/identity/password";
-import { appscGroup1Syllabus, type RawNode } from "./syllabus/appsc-group1";
+import { buildAppscSyllabus, type RawNode } from "./syllabus/microthemes";
 
 const prisma = new PrismaClient();
 
@@ -59,29 +59,27 @@ interface Ancestor {
 }
 
 /**
- * Idempotently seeds a syllabus tree. Slugs are the ancestor `key`s joined by
- * "-", giving every node a globally-unique, readable slug. Closure rows are
- * written for self (depth 0) and every ancestor.
+ * Idempotently seeds a syllabus tree. Each node carries a globally-unique,
+ * pre-computed slug. Closure rows are written for self (depth 0) and every
+ * ancestor, enabling O(1) subtree/ancestor queries.
  */
 async function seedSyllabusTree(
   examId: string,
   nodes: RawNode[],
   parentId: string | null = null,
-  parentSlug: string | null = null,
   ancestors: Ancestor[] = [],
 ): Promise<number> {
   let count = 0;
   let order = 0;
   for (const raw of nodes) {
-    const slug = parentSlug ? `${parentSlug}-${raw.key}` : raw.key;
-    let node = await prisma.syllabusNode.findFirst({ where: { examId, slug, parentId } });
+    let node = await prisma.syllabusNode.findFirst({ where: { examId, slug: raw.slug } });
     node ??= await prisma.syllabusNode.create({
       data: {
         examId,
         parentId,
         type: raw.type,
         title: raw.title,
-        slug,
+        slug: raw.slug,
         orderIndex: order,
         summary: raw.summary ?? null,
         examAngle: raw.examAngle ?? null,
@@ -102,7 +100,7 @@ async function seedSyllabusTree(
         { id: node.id, depth: 1 },
         ...ancestors.map((a) => ({ id: a.id, depth: a.depth + 1 })),
       ];
-      count += await seedSyllabusTree(examId, raw.children, node.id, slug, childAncestors);
+      count += await seedSyllabusTree(examId, raw.children, node.id, childAncestors);
     }
     order += 1;
   }
@@ -144,8 +142,8 @@ async function main(): Promise<void> {
     });
   }
 
-  // The official APPSC Group-1 syllabus (Prelims + Mains).
-  const nodeCount = await seedSyllabusTree(exam.id, appscGroup1Syllabus);
+  // The official APPSC Group-1 syllabus (Prelims + Mains, micro-theme grain).
+  const nodeCount = await seedSyllabusTree(exam.id, buildAppscSyllabus());
 
   console.log(`Seed complete: RBAC, exam, super admin, and ${nodeCount} syllabus nodes.`);
   console.log(
