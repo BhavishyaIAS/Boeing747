@@ -6,6 +6,7 @@ import {
   type AddReviewData,
   type AddVersionData,
   type ContentRepository,
+  type ContentSummary,
   type CreateContentData,
   type ItemWithBody,
   type ListManagedParams,
@@ -84,6 +85,17 @@ class FakeContentRepo implements ContentRepository {
     return [...this.items.values()].filter(
       (i) => i.examId === params.examId && (!params.status || i.status === params.status),
     );
+  }
+  async listPublishedByNode(examId: string): Promise<ContentSummary[]> {
+    return [...this.items.values()]
+      .filter((i) => i.examId === examId && i.status === "PUBLISHED")
+      .map((i) => ({
+        id: i.id,
+        title: i.title,
+        slug: i.slug,
+        type: i.type,
+        readingTimeSeconds: i.readingTimeSeconds,
+      }));
   }
   async createWithVersion(data: CreateContentData): Promise<ContentItem> {
     if (this.duplicate) throw new DuplicateSlugError();

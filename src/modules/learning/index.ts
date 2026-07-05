@@ -12,3 +12,9 @@ export type {
   RevisionDueItem,
   SubjectCoverageRow,
 } from "./progress.repository";
+export {
+  NodeProgressService,
+  nodeProgressService,
+  nextRevisionDate,
+} from "./node-progress.service";
+export type { NodeProgressRepository, NodeStatusRecord } from "./node-progress.repository";

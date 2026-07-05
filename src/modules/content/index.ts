@@ -10,7 +10,7 @@ export {
   type UpdateContentInput,
   type TransitionInput,
 } from "./dto";
-export type { ItemWithBody } from "./content.repository";
+export type { ItemWithBody, ContentSummary } from "./content.repository";
 export type {
   ContentRepository,
   CreateContentData,

@@ -20,6 +20,7 @@ import {
   DuplicateSlugError,
   PrismaContentRepository,
   type ContentRepository,
+  type ContentSummary,
   type ItemWithBody,
 } from "./content.repository";
 import type { CreateContentInput } from "./dto";
@@ -105,6 +106,12 @@ export class ContentService {
     const items = hasMore ? rows.slice(0, params.limit) : rows;
     const last = items[items.length - 1];
     return { items, nextCursor: hasMore && last ? last.id : null };
+  }
+
+  /** Published content attached to a syllabus node (for the node hub). */
+  async listByNode(actor: Actor, examId: string, nodeId: string): Promise<ContentSummary[]> {
+    authorize(actor, PERMISSIONS.CONTENT_READ, { examId });
+    return this.repo.listPublishedByNode(examId, nodeId);
   }
 
   async getById(actor: Actor, examId: string, id: string): Promise<ContentItem> {

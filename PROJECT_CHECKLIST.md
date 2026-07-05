@@ -23,8 +23,8 @@ begins.
 | 7 | Backend APIs | ✅ Done — approved | code + `docs/07-api.md` |
 | 8 | Authentication | ✅ Done — approved | code |
 | 9 | Admin Panel | ✅ Done — approved | code |
-| 10 | Student Dashboard | ✅ Done — **awaiting approval** | code |
-| 11 | Syllabus Engine | ⬜ Not started | code |
+| 10 | Student Dashboard | ✅ Done — approved | code |
+| 11 | Syllabus Engine | ✅ Done — **awaiting approval** | code |
 | 12 | Notes Module | ⬜ Not started | code |
 | 13 | PYQ Module | ⬜ Not started | code |
 | 14 | Current Affairs Module | ⬜ Not started | code |
@@ -253,9 +253,28 @@ begins.
 
 ---
 
+## Phase 11 — Summary of Work Done
+
+- **Per-user node progress** (`learning/node-progress.*`): `NodeProgressService`
+  (`markStatus`, `getStatuses`) + repository, with a pure spaced-revision
+  scheduler (`nextRevisionDate`: 3→7→14→30→60-day intervals). Marking MASTERED
+  schedules a revision; REVISED increments and reschedules.
+- **Content-by-node** (`content.listByNode` + `listPublishedByNode`): published
+  material attached to a syllabus node.
+- **Syllabus browser** (`/app/syllabus`): subjects list with per-user status dots.
+- **Node hub** (`/app/syllabus/[slug]`): closure-based breadcrumb, node summary +
+  exam angle, progress controls (mark in-progress/mastered/revised via Server
+  Actions), sub-topics grid with status dots, and attached study material grouped
+  by content type — with empty states throughout.
+- **UI:** `NodeStatusBadge` / `NodeStatusDot` reusing the status scale.
+- **Verified:** `tsc --noEmit` ✓ · **59 unit tests** ✓ (5 new: revision scheduler
+  + markStatus behaviour + authorization) · **`next build` ✓**.
+
+---
+
 ## Next Up
 
-**Phase 11 — Syllabus Engine** (starts on your approval): the student-facing
-syllabus graph — the two-pane tree browser and node hub (breadcrumb, children,
-attached content) — plus per-user node progress tracking, wired to the taxonomy
-service and the design system.
+**Phase 12 — Notes Module** (starts on your approval): the student reading
+experience — the content reader (`/app/read/[slug]`) rendering the stored
+document with reading-progress tracking and bookmarks — plus the richer editing
+story. Backed by the content service and reading-history data.

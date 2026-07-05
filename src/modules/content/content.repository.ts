@@ -49,6 +49,14 @@ export interface ItemWithBody {
   body: Prisma.JsonValue;
 }
 
+export interface ContentSummary {
+  id: string;
+  title: string;
+  slug: string;
+  type: ContentType;
+  readingTimeSeconds: number | null;
+}
+
 export interface UpdateStatusData {
   status: ContentStatus;
   publishedAt?: Date;
@@ -72,6 +80,7 @@ export interface ContentRepository {
   addVersion(data: AddVersionData): Promise<ContentItem>;
   listPublished(params: ListPublishedParams): Promise<ContentItem[]>;
   listManaged(params: ListManagedParams): Promise<ContentItem[]>;
+  listPublishedByNode(examId: string, nodeId: string): Promise<ContentSummary[]>;
   updateStatus(id: string, data: UpdateStatusData): Promise<ContentItem>;
   addReview(data: AddReviewData): Promise<void>;
 }
@@ -201,6 +210,20 @@ export class PrismaContentRepository implements ContentRepository {
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
+  }
+
+  async listPublishedByNode(examId: string, nodeId: string): Promise<ContentSummary[]> {
+    const rows = await this.db.contentItem.findMany({
+      where: {
+        examId,
+        status: "PUBLISHED",
+        deletedAt: null,
+        nodes: { some: { nodeId } },
+      },
+      orderBy: [{ type: "asc" }, { publishedAt: "desc" }],
+      select: { id: true, title: true, slug: true, type: true, readingTimeSeconds: true },
+    });
+    return rows;
   }
 
   updateStatus(id: string, data: UpdateStatusData): Promise<ContentItem> {
