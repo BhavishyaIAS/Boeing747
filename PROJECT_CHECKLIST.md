@@ -25,8 +25,8 @@ begins.
 | 9 | Admin Panel | ✅ Done — approved | code |
 | 10 | Student Dashboard | ✅ Done — approved | code |
 | 11 | Syllabus Engine | ✅ Done — approved | code |
-| 12 | Notes Module | ✅ Done — **awaiting approval** | code |
-| 13 | PYQ Module | ⬜ Not started | code |
+| 12 | Notes Module | ✅ Done — approved | code |
+| 13 | PYQ Module | ✅ Done — **awaiting approval** | code |
 | 14 | Current Affairs Module | ⬜ Not started | code |
 | 15 | Testing | ⬜ Not started | tests |
 | 16 | Deployment | ⬜ Not started | CI/CD + infra |
@@ -303,8 +303,28 @@ begins.
 
 ---
 
+## Phase 13 — Summary of Work Done
+
+- **PYQ module** (`src/modules/pyq`): `PyqService` + repository over the
+  `question`/`question_option` tables — `list` (stage/year filters, cursor
+  pagination), `availableYears`, and `getBySlug` (question + options + explanation
+  + linked model-answer body + topic tags). Requires `pyq:read`.
+- **Browse** (`/app/pyqs`): stage tabs (Prelims/Mains/Interview) + year filter;
+  question cards with stage/year/paper/marks/difficulty, kind, and topic chips.
+- **Detail** (`/app/pyqs/[slug]`): question prompt (RichText); **MCQs** get an
+  interactive pick-then-reveal component (correct/incorrect highlighting +
+  explanation); **descriptive** questions get a collapsible model answer +
+  evaluation points; linked topics deep-link into the syllabus.
+- **Sample data:** seed now creates 3 real PYQs (2 Prelims MCQs + 1 Mains
+  descriptive with a model answer), linked to syllabus nodes, so the module is
+  demonstrable end-to-end.
+- **Verified:** `tsc --noEmit` ✓ · **68 unit tests** ✓ (4 new: PYQ pagination +
+  authorization + not-found) · **`next build` ✓**.
+
+---
+
 ## Next Up
 
-**Phase 13 — PYQ Module** (starts on your approval): the Previous-Year-Questions
-experience — browse by stage/paper/subject/year with the model-answer view —
-plus the question/MCQ content types wired through the content service.
+**Phase 14 — Current Affairs Module** (starts on your approval): the daily/weekly/
+monthly current-affairs feed with subject/region/category filters, backed by the
+`current_affair` content type and linked to syllabus nodes.

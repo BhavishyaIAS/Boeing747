@@ -107,6 +107,205 @@ async function seedSyllabusTree(
   return count;
 }
 
+function doc(paragraphs: string[]): object {
+  return {
+    type: "doc",
+    content: paragraphs.map((text) => ({
+      type: "paragraph",
+      content: [{ type: "text", text }],
+    })),
+  };
+}
+
+/** Create (idempotently) a PUBLISHED content item with an initial version. */
+async function ensurePublished(
+  examId: string,
+  authorId: string,
+  input: {
+    type: "QUESTION" | "MODEL_ANSWER";
+    title: string;
+    slug: string;
+    body: object;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+  },
+): Promise<string> {
+  const existing = await prisma.contentItem.findFirst({ where: { examId, slug: input.slug } });
+  if (existing) return existing.id;
+
+  const item = await prisma.contentItem.create({
+    data: {
+      examId,
+      type: input.type,
+      title: input.title,
+      slug: input.slug,
+      status: "PUBLISHED",
+      authorId,
+      difficulty: input.difficulty ?? null,
+      readingTimeSeconds: 120,
+      publishedAt: new Date(),
+    },
+  });
+  const version = await prisma.contentVersion.create({
+    data: { contentItemId: item.id, versionNumber: 1, body: input.body, plainText: "", createdById: authorId },
+  });
+  await prisma.contentItem.update({
+    where: { id: item.id },
+    data: { currentVersionId: version.id },
+  });
+  return item.id;
+}
+
+async function linkNode(contentItemId: string, nodeId: string): Promise<void> {
+  await prisma.contentNode.upsert({
+    where: { contentItemId_nodeId: { contentItemId, nodeId } },
+    update: {},
+    create: { contentItemId, nodeId, relationType: "PRIMARY" },
+  });
+}
+
+async function findNode(examId: string, contains: string): Promise<string | null> {
+  const node = await prisma.syllabusNode.findFirst({
+    where: { examId, title: { contains, mode: "insensitive" }, deletedAt: null },
+    orderBy: { type: "asc" },
+    select: { id: true },
+  });
+  return node?.id ?? null;
+}
+
+async function seedSamplePyqs(examId: string, authorId: string): Promise<number> {
+  const fallback = await prisma.syllabusNode.findFirst({
+    where: { examId, type: "SUBJECT" },
+    orderBy: { orderIndex: "asc" },
+    select: { id: true },
+  });
+  const nodeFor = async (kw: string): Promise<string | null> =>
+    (await findNode(examId, kw)) ?? fallback?.id ?? null;
+
+  let count = 0;
+
+  // 1. Prelims MCQ — Constitution.
+  const q1 = await ensurePublished(examId, authorId, {
+    type: "QUESTION",
+    title: "Which article of the Indian Constitution guarantees the Right to Life and Personal Liberty?",
+    slug: "pyq-pre-2023-right-to-life",
+    body: doc(["Choose the correct option."]),
+    difficulty: "EASY",
+  });
+  await prisma.question.upsert({
+    where: { contentItemId: q1 },
+    update: {},
+    create: {
+      contentItemId: q1,
+      kind: "MCQ",
+      stage: "PRELIMS",
+      isPyq: true,
+      year: 2023,
+      paper: "Paper I",
+      marks: 1,
+      source: "APPSC Group-I Prelims 2023",
+      explanation: doc([
+        "Article 21 guarantees that no person shall be deprived of life or personal liberty except according to procedure established by law.",
+        "In Maneka Gandhi v. Union of India (1978), the Supreme Court held that this procedure must be just, fair and reasonable.",
+      ]),
+    },
+  });
+  if ((await prisma.questionOption.count({ where: { questionItemId: q1 } })) === 0) {
+    await prisma.questionOption.createMany({
+      data: [
+        { questionItemId: q1, label: "A", text: "Article 14", isCorrect: false, orderIndex: 0 },
+        { questionItemId: q1, label: "B", text: "Article 19", isCorrect: false, orderIndex: 1 },
+        { questionItemId: q1, label: "C", text: "Article 21", isCorrect: true, orderIndex: 2 },
+        { questionItemId: q1, label: "D", text: "Article 32", isCorrect: false, orderIndex: 3 },
+      ],
+    });
+  }
+  const n1 = await nodeFor("Constitution");
+  if (n1) await linkNode(q1, n1);
+  count += 1;
+
+  // 2. Prelims MCQ — Indus Valley Civilization.
+  const q2 = await ensurePublished(examId, authorId, {
+    type: "QUESTION",
+    title: "The Great Bath, an important public structure of the Indus Valley Civilization, was found at which site?",
+    slug: "pyq-pre-2022-great-bath",
+    body: doc(["Choose the correct option."]),
+    difficulty: "MEDIUM",
+  });
+  await prisma.question.upsert({
+    where: { contentItemId: q2 },
+    update: {},
+    create: {
+      contentItemId: q2,
+      kind: "MCQ",
+      stage: "PRELIMS",
+      isPyq: true,
+      year: 2022,
+      paper: "Paper I",
+      marks: 1,
+      source: "APPSC Group-I Prelims 2022",
+      explanation: doc([
+        "The Great Bath was discovered at Mohenjodaro. It reflects the advanced hydraulic engineering and ritual bathing practices of the Harappans.",
+      ]),
+    },
+  });
+  if ((await prisma.questionOption.count({ where: { questionItemId: q2 } })) === 0) {
+    await prisma.questionOption.createMany({
+      data: [
+        { questionItemId: q2, label: "A", text: "Harappa", isCorrect: false, orderIndex: 0 },
+        { questionItemId: q2, label: "B", text: "Mohenjodaro", isCorrect: true, orderIndex: 1 },
+        { questionItemId: q2, label: "C", text: "Lothal", isCorrect: false, orderIndex: 2 },
+        { questionItemId: q2, label: "D", text: "Kalibangan", isCorrect: false, orderIndex: 3 },
+      ],
+    });
+  }
+  const n2 = await nodeFor("Indus Valley");
+  if (n2) await linkNode(q2, n2);
+  count += 1;
+
+  // 3. Mains descriptive with a model answer.
+  const ma = await ensurePublished(examId, authorId, {
+    type: "MODEL_ANSWER",
+    title: "Model Answer — Scope of Article 21",
+    slug: "model-mains-2023-article-21",
+    body: doc([
+      "Introduction: Article 21 guarantees the Right to Life and Personal Liberty, one of the most dynamic fundamental rights.",
+      "Body: Post-Maneka Gandhi (1978), 'procedure established by law' must be just, fair and reasonable. The Court has read in a wide bundle of rights — right to livelihood (Olga Tellis), right to a clean environment (Subhash Kumar), right to privacy (K.S. Puttaswamy, 2017), and right to die with dignity (Common Cause, 2018).",
+      "Way forward: A rights-based, purposive interpretation of Article 21 must be balanced against reasonable state regulation and competing public interest.",
+      "Conclusion: Article 21 has evolved from a narrow guarantee into the bedrock of substantive due process in India.",
+    ]),
+  });
+  const q3 = await ensurePublished(examId, authorId, {
+    type: "QUESTION",
+    title: "Examine the expanding scope of Article 21 in light of judicial interpretation since the Maneka Gandhi case.",
+    slug: "pyq-mains-2023-article-21",
+    body: doc(["Answer in about 250 words. (15 marks)"]),
+    difficulty: "HARD",
+  });
+  await prisma.question.upsert({
+    where: { contentItemId: q3 },
+    update: { modelAnswerItemId: ma },
+    create: {
+      contentItemId: q3,
+      kind: "DESCRIPTIVE",
+      stage: "MAINS",
+      isPyq: true,
+      year: 2023,
+      paper: "Paper III",
+      marks: 15,
+      source: "APPSC Group-I Mains 2023",
+      modelAnswerItemId: ma,
+      explanation: doc([
+        "Evaluation points: define Article 21; cite Maneka Gandhi; list expanded rights with case law; include a balanced way-forward and conclusion.",
+      ]),
+    },
+  });
+  const n3 = await nodeFor("Fundamental Rights");
+  if (n3) await linkNode(q3, n3);
+  count += 1;
+
+  return count;
+}
+
 async function main(): Promise<void> {
   const roleId = await seedRbac();
 
@@ -145,7 +344,12 @@ async function main(): Promise<void> {
   // The official APPSC Group-1 syllabus (Prelims + Mains, micro-theme grain).
   const nodeCount = await seedSyllabusTree(exam.id, buildAppscSyllabus());
 
-  console.log(`Seed complete: RBAC, exam, super admin, and ${nodeCount} syllabus nodes.`);
+  // A few sample PYQs so the module is demonstrable end-to-end.
+  const pyqCount = await seedSamplePyqs(exam.id, admin.id);
+
+  console.log(
+    `Seed complete: RBAC, exam, super admin, ${nodeCount} syllabus nodes, ${pyqCount} sample PYQs.`,
+  );
   console.log(
     passwordHash
       ? "Super admin password set from SEED_ADMIN_PASSWORD (admin@bhavishyaias.app)."
