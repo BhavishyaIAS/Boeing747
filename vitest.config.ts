@@ -16,9 +16,10 @@ export default defineConfig({
       { find: /^@\/(.*)$/, replacement: src("$1") },
     ],
   },
+  esbuild: { jsx: "automatic" },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
     globals: false,
   },
 });

@@ -19,6 +19,14 @@ interface PMNode {
   attrs?: Record<string, unknown>;
 }
 
+/** Only allow safe URL schemes; block javascript:/data: etc. */
+function safeHref(href: unknown): string {
+  if (typeof href !== "string") return "#";
+  const trimmed = href.trim();
+  if (/^(https?:|mailto:|tel:|\/|#)/i.test(trimmed)) return trimmed;
+  return "#";
+}
+
 function applyMarks(text: string, marks: PMMark[] | undefined): ReactNode {
   let el: ReactNode = text;
   for (const mark of marks ?? []) {
@@ -38,9 +46,8 @@ function applyMarks(text: string, marks: PMMark[] | undefined): ReactNode {
         el = <s>{el}</s>;
         break;
       case "link": {
-        const href = typeof mark.attrs?.href === "string" ? mark.attrs.href : "#";
         el = (
-          <a href={href} rel="noopener noreferrer nofollow" target="_blank">
+          <a href={safeHref(mark.attrs?.href)} rel="noopener noreferrer nofollow" target="_blank">
             {el}
           </a>
         );

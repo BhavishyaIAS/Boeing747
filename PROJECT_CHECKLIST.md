@@ -27,8 +27,8 @@ begins.
 | 11 | Syllabus Engine | ✅ Done — approved | code |
 | 12 | Notes Module | ✅ Done — approved | code |
 | 13 | PYQ Module | ✅ Done — approved | code |
-| 14 | Current Affairs Module | ✅ Done — **awaiting approval** | code |
-| 15 | Testing | ⬜ Not started | tests |
+| 14 | Current Affairs Module | ✅ Done — approved | code |
+| 15 | Testing | ✅ Done — **awaiting approval** | tests + `docs/08-testing.md` |
 | 16 | Deployment | ⬜ Not started | CI/CD + infra |
 
 ---
@@ -340,8 +340,27 @@ begins.
 
 ---
 
+## Phase 15 — Summary of Work Done
+
+- **Integration tests** (`tests/integration/`): API-envelope helpers + error
+  taxonomy → HTTP mapping + Zod body/query parsing; and route-handler contracts
+  for `GET /syllabus` (401/422/200) and `content` (POST 422/201, GET [id] 404),
+  with mocked auth + services and the real api/Zod layer.
+- **Component test:** the rich-text renderer — structure, **HTML escaping**, and
+  **unsafe-link blocking**. Testing surfaced a gap, so the renderer was hardened
+  to block `javascript:`/`data:` hrefs.
+- **JSX enabled in Vitest** (esbuild automatic; `.tsx` tests) + `react-dom/server`.
+- **CI workflow** (`.github/workflows/ci.yml`): every push/PR runs
+  install → prisma generate → prisma validate → typecheck → test → build, with
+  concurrency-cancel.
+- **Testing strategy doc** (`docs/08-testing.md`).
+- **Coverage grew 71 → 90 tests** across 16 files; `tsc --noEmit` ✓, `next build` ✓.
+
+---
+
 ## Next Up
 
-**Phase 15 — Testing** (starts on your approval): broaden automated coverage —
-integration tests for the API route handlers / services, component & a11y checks,
-and wiring the test suite into a CI workflow (GitHub Actions).
+**Phase 16 — Deployment** (starts on your approval): the deployment story —
+Dockerfile + docker-compose (app + Postgres + Redis), production configuration,
+environment/secrets, migration + seed runbook, and Vercel deployment notes —
+completing the phased build.
