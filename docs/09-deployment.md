@@ -15,7 +15,8 @@ All keys are documented in `.env.example` and parsed/validated at boot by
 
 | Key | Required | Notes |
 |-----|----------|-------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
+| `DATABASE_URL` | ✅ | PostgreSQL connection string (pooled, for the runtime) |
+| `DIRECT_URL` | ✅ | Direct connection for migrations; = `DATABASE_URL` on self-host/local |
 | `APP_URL` | ✅ | Public base URL (e.g. `https://bhavishyaias.app`) |
 | `AUTH_SECRET` | ✅ prod | `openssl rand -base64 32` |
 | `REDIS_URL` | ○ | Cache / sessions / rate-limit (recommended in prod) |

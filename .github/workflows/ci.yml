@@ -17,6 +17,7 @@ jobs:
       # Dummy values — CI does not connect to a real database. Prisma validate /
       # generate and the (dynamic) Next build only need these to be present.
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bhavishya?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/bhavishya?schema=public
       AUTH_SECRET: ci-placeholder-secret
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
