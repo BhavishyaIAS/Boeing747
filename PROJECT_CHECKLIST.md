@@ -24,8 +24,8 @@ begins.
 | 8 | Authentication | ✅ Done — approved | code |
 | 9 | Admin Panel | ✅ Done — approved | code |
 | 10 | Student Dashboard | ✅ Done — approved | code |
-| 11 | Syllabus Engine | ✅ Done — **awaiting approval** | code |
-| 12 | Notes Module | ⬜ Not started | code |
+| 11 | Syllabus Engine | ✅ Done — approved | code |
+| 12 | Notes Module | ✅ Done — **awaiting approval** | code |
 | 13 | PYQ Module | ⬜ Not started | code |
 | 14 | Current Affairs Module | ⬜ Not started | code |
 | 15 | Testing | ⬜ Not started | tests |
@@ -282,9 +282,29 @@ begins.
 
 ---
 
+## Phase 12 — Summary of Work Done
+
+- **Content reader** (`/app/read/[slug]`, gated + dynamic): renders published
+  content with reading-first serif typography, reading-time, back-to-syllabus,
+  and a bookmark toggle. Closes the loop — dashboard "continue reading" and
+  node-hub study-material links now open a real reader.
+- **Safe rich-text renderer** (`components/content/rich-text.tsx`): a
+  TipTap/ProseMirror JSON → React renderer built from typed elements only (no
+  `dangerouslySetInnerHTML`) — XSS-safe; supports paragraphs, headings, lists,
+  blockquotes, code, marks (bold/italic/code/strike/link), images & rules.
+- **Reading-progress tracking:** a client top-bar tracks scroll depth and
+  persists position + time (throttled, flush on tab-hide/unmount); progress is
+  monotonic (`ReadingService`, one row per user+item) and feeds the dashboard.
+- **Bookmarks:** `BookmarkService` (toggle/isBookmarked) on the polymorphic
+  bookmark table; optimistic client toggle via a Server Action.
+- **Reading typography** added to `globals.css` (`.reader-prose`, 68ch measure).
+- **Verified:** `tsc --noEmit` ✓ · **64 unit tests** ✓ (5 new: reading clamp/
+  monotonic + bookmark toggle + authorization) · **`next build` ✓**.
+
+---
+
 ## Next Up
 
-**Phase 12 — Notes Module** (starts on your approval): the student reading
-experience — the content reader (`/app/read/[slug]`) rendering the stored
-document with reading-progress tracking and bookmarks — plus the richer editing
-story. Backed by the content service and reading-history data.
+**Phase 13 — PYQ Module** (starts on your approval): the Previous-Year-Questions
+experience — browse by stage/paper/subject/year with the model-answer view —
+plus the question/MCQ content types wired through the content service.

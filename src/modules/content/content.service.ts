@@ -114,6 +114,14 @@ export class ContentService {
     return this.repo.listPublishedByNode(examId, nodeId);
   }
 
+  /** A published item + body for the reader, by slug. */
+  async getPublishedBySlug(actor: Actor, examId: string, slug: string): Promise<ItemWithBody> {
+    authorize(actor, PERMISSIONS.CONTENT_READ, { examId });
+    const found = await this.repo.findPublishedBySlugWithBody(examId, slug);
+    if (!found) throw new NotFoundError("Content not found");
+    return found;
+  }
+
   async getById(actor: Actor, examId: string, id: string): Promise<ContentItem> {
     authorize(actor, PERMISSIONS.CONTENT_READ, { examId });
 

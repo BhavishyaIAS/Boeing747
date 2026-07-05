@@ -66,6 +66,12 @@ class FakeContentRepo implements ContentRepository {
     const item = this.items.get(id);
     return item ? { item, body: {} } : null;
   }
+  async findPublishedBySlugWithBody(examId: string, slug: string): Promise<ItemWithBody | null> {
+    const item = [...this.items.values()].find(
+      (i) => i.examId === examId && i.slug === slug && i.status === "PUBLISHED",
+    );
+    return item ? { item, body: {} } : null;
+  }
   async addVersion(data: AddVersionData): Promise<ContentItem> {
     this.versionsAdded += 1;
     const it = this.items.get(data.contentItemId);

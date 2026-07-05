@@ -76,6 +76,7 @@ export class DuplicateSlugError extends Error {}
 export interface ContentRepository {
   findById(id: string): Promise<ContentItem | null>;
   findByIdWithBody(id: string): Promise<ItemWithBody | null>;
+  findPublishedBySlugWithBody(examId: string, slug: string): Promise<ItemWithBody | null>;
   createWithVersion(data: CreateContentData): Promise<ContentItem>;
   addVersion(data: AddVersionData): Promise<ContentItem>;
   listPublished(params: ListPublishedParams): Promise<ContentItem[]>;
@@ -95,6 +96,19 @@ export class PrismaContentRepository implements ContentRepository {
   async findByIdWithBody(id: string): Promise<ItemWithBody | null> {
     const row = await this.db.contentItem.findFirst({
       where: { id, deletedAt: null },
+      include: { currentVersion: true },
+    });
+    if (!row) return null;
+    const { currentVersion, ...item } = row;
+    return { item, body: currentVersion?.body ?? {} };
+  }
+
+  async findPublishedBySlugWithBody(
+    examId: string,
+    slug: string,
+  ): Promise<ItemWithBody | null> {
+    const row = await this.db.contentItem.findFirst({
+      where: { examId, slug, status: "PUBLISHED", deletedAt: null },
       include: { currentVersion: true },
     });
     if (!row) return null;
