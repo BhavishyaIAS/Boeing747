@@ -4,6 +4,7 @@ import {
   ROLE_PERMISSIONS,
 } from "../src/modules/identity/rbac";
 import { hashPassword } from "../src/modules/identity/password";
+import { appscGroup1Syllabus, type RawNode } from "./syllabus/appsc-group1";
 
 const prisma = new PrismaClient();
 
@@ -57,29 +58,55 @@ interface Ancestor {
   depth: number;
 }
 
-async function ensureNode(
+/**
+ * Idempotently seeds a syllabus tree. Slugs are the ancestor `key`s joined by
+ * "-", giving every node a globally-unique, readable slug. Closure rows are
+ * written for self (depth 0) and every ancestor.
+ */
+async function seedSyllabusTree(
   examId: string,
-  parentId: string | null,
-  type: "SUBJECT" | "UNIT" | "THEME" | "SUB_THEME" | "MICRO_THEME" | "CONCEPT",
-  title: string,
-  slug: string,
-  orderIndex: number,
-  ancestors: Ancestor[],
-): Promise<{ id: string }> {
-  let node = await prisma.syllabusNode.findFirst({ where: { examId, slug, parentId } });
-  node ??= await prisma.syllabusNode.create({
-    data: { examId, parentId, type, title, slug, orderIndex },
-  });
-
-  const closures: Ancestor[] = [{ id: node.id, depth: 0 }, ...ancestors];
-  for (const anc of closures) {
-    await prisma.syllabusClosure.upsert({
-      where: { ancestorId_descendantId: { ancestorId: anc.id, descendantId: node.id } },
-      update: {},
-      create: { ancestorId: anc.id, descendantId: node.id, depth: anc.depth },
+  nodes: RawNode[],
+  parentId: string | null = null,
+  parentSlug: string | null = null,
+  ancestors: Ancestor[] = [],
+): Promise<number> {
+  let count = 0;
+  let order = 0;
+  for (const raw of nodes) {
+    const slug = parentSlug ? `${parentSlug}-${raw.key}` : raw.key;
+    let node = await prisma.syllabusNode.findFirst({ where: { examId, slug, parentId } });
+    node ??= await prisma.syllabusNode.create({
+      data: {
+        examId,
+        parentId,
+        type: raw.type,
+        title: raw.title,
+        slug,
+        orderIndex: order,
+        summary: raw.summary ?? null,
+        examAngle: raw.examAngle ?? null,
+      },
     });
+    count += 1;
+
+    for (const anc of [{ id: node.id, depth: 0 }, ...ancestors]) {
+      await prisma.syllabusClosure.upsert({
+        where: { ancestorId_descendantId: { ancestorId: anc.id, descendantId: node.id } },
+        update: {},
+        create: { ancestorId: anc.id, descendantId: node.id, depth: anc.depth },
+      });
+    }
+
+    if (raw.children?.length) {
+      const childAncestors: Ancestor[] = [
+        { id: node.id, depth: 1 },
+        ...ancestors.map((a) => ({ id: a.id, depth: a.depth + 1 })),
+      ];
+      count += await seedSyllabusTree(examId, raw.children, node.id, slug, childAncestors);
+    }
+    order += 1;
   }
-  return { id: node.id };
+  return count;
 }
 
 async function main(): Promise<void> {
@@ -117,17 +144,10 @@ async function main(): Promise<void> {
     });
   }
 
-  // Sample syllabus slice: Polity → Constitution → Fundamental Rights.
-  const subject = await ensureNode(exam.id, null, "SUBJECT", "Polity", "polity", 0, []);
-  const unit = await ensureNode(exam.id, subject.id, "UNIT", "Constitution", "constitution", 0, [
-    { id: subject.id, depth: 1 },
-  ]);
-  await ensureNode(exam.id, unit.id, "THEME", "Fundamental Rights", "fundamental-rights", 0, [
-    { id: unit.id, depth: 1 },
-    { id: subject.id, depth: 2 },
-  ]);
+  // The official APPSC Group-1 syllabus (Prelims + Mains).
+  const nodeCount = await seedSyllabusTree(exam.id, appscGroup1Syllabus);
 
-  console.log("Seed complete: RBAC, exam, super admin, and a sample syllabus slice.");
+  console.log(`Seed complete: RBAC, exam, super admin, and ${nodeCount} syllabus nodes.`);
   console.log(
     passwordHash
       ? "Super admin password set from SEED_ADMIN_PASSWORD (admin@bhavishyaias.app)."

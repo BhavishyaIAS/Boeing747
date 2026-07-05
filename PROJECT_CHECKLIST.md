@@ -267,8 +267,14 @@ begins.
   Actions), sub-topics grid with status dots, and attached study material grouped
   by content type — with empty states throughout.
 - **UI:** `NodeStatusBadge` / `NodeStatusDot` reusing the status scale.
+- **Real syllabus data:** encoded the **official APPSC Group-1 syllabus** (Prelims
+  + Mains, 2018 notification) from the provided PDFs into
+  `prisma/syllabus/appsc-group1.ts` — **131 nodes** (9 papers → 19 units → 103
+  themes) with summaries + exam-angle notes; the seed now populates the full graph
+  (globally-unique readable slugs, closure rows) instead of the sample slice.
 - **Verified:** `tsc --noEmit` ✓ · **59 unit tests** ✓ (5 new: revision scheduler
-  + markStatus behaviour + authorization) · **`next build` ✓**.
+  + markStatus behaviour + authorization) · syllabus tree validated (0 slug
+  collisions) · **`next build` ✓**.
 
 ---
 
