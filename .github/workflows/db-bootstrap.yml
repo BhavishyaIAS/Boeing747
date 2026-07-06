@@ -1,0 +1,50 @@
+name: Database Bootstrap
+
+# Run this ONCE (and again only when the schema changes) to set up the database:
+#   GitHub → Actions → "Database Bootstrap" → Run workflow.
+# It applies migrations, the search/leaderboard SQL, and (optionally) the seed.
+# Requires repo secrets: DATABASE_URL, DIRECT_URL, and (optional) SEED_ADMIN_PASSWORD.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_seed:
+        description: "Also seed data (RBAC, 960-node syllabus, sample PYQs & current affairs)"
+        type: boolean
+        default: true
+
+jobs:
+  bootstrap:
+    name: Migrate + seed the database
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+
+      - name: Apply migrations
+        run: pnpm prisma migrate deploy
+
+      - name: Full-text search columns + indexes
+        run: pnpm prisma db execute --file prisma/sql/001_search.sql --schema prisma/schema.prisma
+
+      - name: Leaderboard materialized view
+        run: pnpm prisma db execute --file prisma/sql/002_leaderboard.sql --schema prisma/schema.prisma
+
+      - name: Seed data
+        if: ${{ inputs.run_seed }}
+        run: pnpm db:seed
